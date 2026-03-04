@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Survey</title>
+</head>
+<body>
+    <header>
+        <h1>Customer Satisfaction Survey</h1>
+        <hr>
+        <nav>
+            <a href="#home">Home</a> |
+            <a href="#about">About</a> |
+            <a href="#contack">Contact</a>
+        </nav>
+    </header>
+    <main>
+        <form action="">
+            <div>
+                <h2>Personal Information</h2>
+                <hr><br>
+                <div>
+                    <label for="name">Name:</label>
+                    <input id="name" name="name" type="text" required minlength="3" maxlength="20" placeholder="enter your name">
+                </div><br>
+                <div>
+                    <label for="email">Email:</label>
+                    <input id="email" name="email" type="email" required placeholder="your@gamil.com">
+                </div><br>
+                <div>
+                    <label for="age">Age:</label>
+                    <input id="age" name="age" type="number" required min="13" max="120">
+                </div>
+            </div>
+            <div>
+                <h2>Service Satisfaction</h2>
+                <hr>
+                <div>
+                    <p>1. How statisfied are you with our service?</p>
+                    <label>
+                       <input type="radio" value="1"> Very Satisfied
+                    </label><br><br>
+                    <label>
+                       <input type="radio" value="2"> Satisfied
+                    </label><br><br>
+                    <label>
+                       <input type="radio" value="3"> Neutral
+                    </label><br><br>
+                    <label>
+                       <input type="radio" value="4"> Dissatisfied
+                    </label>
+                </div>
+                <div>
+                    <p>2. How helpful are your teacher in class</p>
+                    <label>
+                       <input type="radio" value="1"> Very helpful
+                    </label><br><br>
+                    <label>
+                       <input type="radio" value="2"> Helpful
+                    </label><br><br>
+                    <label>
+                       <input type="radio" value="3"> Somewhat helpful
+                    </label><br><br>
+                    <label>
+                       <input type="radio" value="4"> Not helpful
+                    </label>
+                </div>
+                <div>
+                    <p>3. How do you feel about studying in class</p>
+                    <label>
+                       <input type="radio" value="1"> very happy
+                    </label><br><br>
+                    <label>
+                       <input type="radio" value="2"> Happy
+                    </label><br><br>
+                    <label>
+                       <input type="radio" value="3"> Neutral
+                    </label><br><br>
+                    <label>
+                       <input type="radio" value="4"> Not helpful
+                    </label>
+                </div>
+            </div>
+            <div>
+                <h2>Features Used</h2>
+                <hr>
+                <div>
+                    <p>Which features do you use? (Select all that apply)</p>
+                    <label>
+                        <input type="checkbox" value="1"> Dashboard
+                    </label><br><br>
+                    <label>
+                        <input type="checkbox" value="2"> Reports
+                    </label><br><br>
+                    <label>
+                        <input type="checkbox" value="3"> Analytics
+                    </label><br><br>
+                    <label>
+                        <input type="checkbox" value="4"> Notifications
+                    </label>
+                </div>
+            </div>
+            <div>
+                <h2>Rating</h2>
+                <hr>
+                <div>
+                    <p>Rate your overall experience (1 = Poor, 5 = Excellent)</p>
+                    <label>
+                        1.<input type="radio" value="1">
+                    </label>
+                    <label>
+                        2.<input type="radio" value="2">
+                    </label>
+                    <label>
+                        3.<input type="radio" value="3">
+                    </label>
+                    <label>
+                        4.<input type="radio" value="4">
+                    </label>
+                    <label>
+                        5.<input type="radio" value="5">
+                    </label>
+                </div>
+            </div>
+            <div>
+                <h2>Additional Comments</h2>
+                <hr>
+                <label for="feed-back">
+                    Your feedback:
+                </label><br>
+                <textarea name="feed-back" id="feed-back" style="width:100%;" minlength="10" maxlength="500" rows="5" placeholder="share your thoughts..."></textarea>
+
+            </div><br>
+            <button type="submit">Submit survey</button>
+        </form>
+    </main>
+    <footer>
+        <p>Create by: Chhin Chhat | Date: January 7, 2026</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Vue Todo Emit Example</title>
+
+  <!-- Vue 3 CDN -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    .completed {
+      text-decoration: line-through;
+      color: gray;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 p-8">
+
+<div id="app" class="max-w-xl mx-auto bg-white p-6 rounded shadow">
+  <h2 class="text-2xl font-bold mb-4">Todo List</h2>
+
+  <div v-if="todos.length === 0" class="text-gray-500">
+    No todos left 🎉
+  </div>
+
+  <todo-item
+    v-for="todo in todos"
+    :key="todo.id"
+    :todo="todo"
+    @toggle-complete="handleToggle"
+    @delete-todo="handleDelete"
+    @edit-todo="handleEdit"
+  ></todo-item>
+</div>
+
+<script>
+  const { createApp } = Vue;
+
+  const app = createApp({
+    data() {
+      return {
+        todos: [
+          { id: 1, text: 'Learn Vue', completed: false },
+          { id: 2, text: 'Build project', completed: false }
+        ]
+      }
+    },
+    methods: {
+      handleToggle(todoId) {
+        const todo = this.todos.find(t => t.id === todoId);
+        if (todo) {
+          todo.completed = !todo.completed;
+        }
+      },
+      handleDelete(todoId) {
+        this.todos = this.todos.filter(t => t.id !== todoId);
+      },
+      handleEdit(todoId, newText) {
+        const todo = this.todos.find(t => t.id === todoId);
+        if (todo) {
+          todo.text = newText;
+        }
+      }
+    }
+  });
+
+  // Child component: Todo item
+  app.component('todo-item', {
+    props: {
+      todo: {
+        type: Object,
+        required: true
+      }
+    },
+    emits: ['toggle-complete', 'delete-todo', 'edit-todo'],
+    methods: {
+      toggleComplete() {
+        this.$emit('toggle-complete', this.todo.id);
+      },
+      deleteTodo() {
+        this.$emit('delete-todo', this.todo.id);
+      },
+      startEdit() {
+        const newText = prompt('Edit todo:', this.todo.text);
+        if (newText) {
+          this.$emit('edit-todo', this.todo.id, newText);
+        }
+      }
+    },
+    template: `
+      <div class="flex items-center justify-between border-b py-2">
+        <div class="flex items-center gap-2">
+          <input
+            type="checkbox"
+            :checked="todo.completed"
+            @change="toggleComplete"
+          />
+          <span :class="{ completed: todo.completed }">
+            {{ todo.text }}
+          </span>
+        </div>
+        <div class="space-x-2">
+          <button
+            @click="startEdit"
+            class="px-2 py-1 text-sm bg-blue-500 text-white rounded"
+          >
+            Edit
+          </button>
+          <button
+            @click="deleteTodo"
+            class="px-2 py-1 text-sm bg-red-500 text-white rounded"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    `
+  });
+
+  app.mount('#app');
+</script>
+
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <title>Personal Profile</title>
+    <link href="https://fonts.googleapis.com/css2?family=Asap&family=Lobster&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: "Asap", sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-yellow-300 min-h-screen flex items-center justify-center">
+
+  <div id="app" class="bg-white shadow-xl rounded-2xl p-8 w-full max-w-md transition-all relative">
+    <div class="text-center mb-2 absolute top-[-10px]">
+      <span
+        class="px-3 py-1 rounded-full text-sm font-semibold"
+        :class="professionalMode ? 'bg-blue-600 text-white' : 'bg-pink-500 text-white'"
+      >
+        {{ professionalMode ? 'Professional Mode' : 'Casual Mode' }}
+      </span>
+    </div>
+    <h1
+      class="text-3xl font-bold text-center mb-4"
+      :class="professionalMode ? 'text-gray-800' : 'text-indigo-600'"
+    >
+      {{ fullName }}
+    </h1>
+    <div class="space-y-2 text-gray-700">
+      <p><strong>Age:</strong> {{ age }}</p>
+      <p><strong>Email:</strong> {{ email }}</p>
+      <p><strong>City:</strong> {{ city }}</p>
+    </div>
+    <div class="mt-4">
+      <h2 class="font-semibold text-lg mb-2">Hobbies</h2>
+      <ul class="list-disc list-inside space-y-1">
+        <li v-for="hobby in hobbies" :key="hobby">
+          {{ hobby }}
+        </li>
+      </ul>
+    </div>
+    <div class="mt-4">
+      <h2 class="font-semibold text-lg mb-2">Bio</h2>
+      <p
+        class="p-3 rounded-lg"
+        :class="professionalMode ? 'bg-gray-100' : 'bg-indigo-50'"
+      >
+        {{ professionalMode ? professionalBio : casualBio }}
+      </p>
+    </div>
+    <div class="mt-6 text-center">
+      <p class="italic mb-3 text-gray-600">
+        "{{ randomFact }}"
+      </p>
+
+      <button
+        @click="changeFact"
+        class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
+      >
+        New Random Fact
+      </button>
+    </div>
+
+    <div class="mt-6 text-center">
+      <button
+        @click="toggleMode"
+        class="border border-indigo-600 text-indigo-600 px-4 py-2 rounded-lg hover:bg-indigo-600 hover:text-white transition"
+      >
+        Toggle Mode
+      </button>
+    </div>
+
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+
+    createApp({
+      data() {
+        return {
+          fullName: "Chhin Chhat",
+          age: 20,
+          email: "chhinchhat.ilm2050@gmail.com",
+          city: "Phnom Penh",
+          hobbies: ["Coding", "Music", "Gaming"],
+          professionalBio: "A motivated developer focused on building efficient and user-friendly web applications.",
+          casualBio: "Just a chill coder who loves music, games, and hard working",
+          professionalMode: true,
+          facts: [
+            "University life has taught me how to manage my time better.",
+            "Late-night study sessions are a normal part of my university routine.",
+            "Group projects helped me improve my teamwork skills.",
+            "Balancing classes, assignments, and personal life is a daily challenge.",
+            "University life pushed me to become more independent."
+          ],
+          randomFact: 'University life has taught me how to manage my time better.'
+        };
+      },
+      methods: {
+        changeFact() {
+          const index = Math.floor(Math.random() * this.facts.length);
+          this.randomFact = this.facts[index];
+        },
+        toggleMode() {
+          this.professionalMode = !this.professionalMode;
+        }
+      }
+    }).mount("#app");
+  </script>
+
+</body>
+</html>

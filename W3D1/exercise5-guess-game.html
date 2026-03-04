@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Number Guessing Game</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+
+<body class="min-h-screen flex items-center justify-center bg-gray-900 text-white">
+
+  <div id="app" class="bg-green-400 p-6 rounded-xl w-full max-w-md shadow-lg">
+
+    <h1 class="text-2xl font-bold text-center mb-4">
+       Number Guessing Game
+    </h1>
+
+    <div class="mb-4">
+      <label class="block mb-1">Difficulty</label>
+      <select v-model="maxNumber" @change="newGame"
+        class="w-full p-2 rounded text-black  border-white border-2">
+        <option :value="50">Easy (1–50)</option>
+        <option :value="100">Medium (1–100)</option>
+        <option :value="500">Hard (1–500)</option>
+      </select>
+    </div>
+
+    <div class="flex gap-2 mb-4">
+      <input
+        type="text"
+        v-model.number="guess"
+        :disabled="gameWon"
+        class="flex-1 p-2 rounded text-black border-white border-2"
+        placeholder="Enter your guess"
+      />
+      <button
+        @click="checkGuess"
+        :disabled="gameWon"
+        class="bg-blue-500 px-4 py-2 rounded hover:bg-blue-800 cursor-pointer disabled:opacity-50">
+        Guess
+      </button>
+    </div>
+
+    <div class="text-center mb-2">
+      <p class="text-lg font-semibold">{{ message }}</p>
+      <p class="text-sm text-gray-300">{{ hint }}</p>
+    </div>
+
+    <p class="text-center mb-2">
+      Attempts: {{ attempts }}
+    </p>
+
+    <p class="text-center mb-4 text-blue-600">
+      Best Score: {{ bestScore ?? "—" }}
+    </p>
+
+    <div class="mb-4">
+      <h3 class="font-semibold mb-1">Previous Guesses</h3>
+      <div class="flex flex-wrap gap-2">
+        <span
+          v-for="(g, index) in guesses"
+          :key="index"
+          class="bg-gray-700 px-2 py-1 rounded text-sm">
+          {{ g }}
+        </span>
+      </div>
+    </div>
+
+    <button
+      @click="newGame"
+      class="w-full bg-blue-500 py-2 rounded hover:bg-blue-600 cursor-pointer">
+       New Game
+    </button>
+
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+
+    createApp({
+      data() {
+        return {
+          maxNumber: 100,
+          secret: "",
+          guess: null,
+          attempts: 0,
+          guesses: [],
+          message: "",
+          hint: "",
+          gameWon: false,
+          bestScore: null
+        };
+      },
+
+      methods: {
+        newGame() {
+          this.secret = Math.floor(Math.random() * this.maxNumber) + 1;
+          this.guess = null;
+          this.attempts = 0;
+          this.guesses = [];
+          this.message = "";
+          this.hint = "";
+          this.gameWon = false;
+        },
+
+        checkGuess() {
+            if (!this.guess) return;
+            this.attempts++;
+            this.guesses.push(this.guess);
+            const diff = Math.abs(this.guess - this.secret);
+
+          if (this.guess > this.secret) {
+            this.message = "Too high!";
+          } else if (this.guess < this.secret) {
+            this.message = "Too low!";
+          } else {
+            this.message = `Correct! You won in ${this.attempts} attempts!`;
+            this.gameWon = true;
+
+            if (!this.bestScore || this.attempts < this.bestScore) {
+              this.bestScore = this.attempts;
+            }
+            return;
+          }
+
+
+          if (diff > 30) this.hint = "Very cold";
+          else if (diff > 20) this.hint = "Cold";
+          else if (diff > 10) this.hint = "Warm";
+          else if (diff > 5) this.hint = "Hot";
+          else this.hint = "Very hot!";
+        }
+      }
+    }).mount("#app");
+  </script>
+
+</body>
+</html>

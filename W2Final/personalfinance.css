@@ -1,0 +1,44 @@
+body {
+    font-family: "Asap", sans-serif;
+}
+
+body.dark {
+    background-color: #111827;
+    color: #f9fafb;
+}
+
+body.dark .board {
+    color: white;
+}
+
+body.dark header {
+    background-color: #1f2933;
+    color: white;
+}
+
+body.dark .bg-white {
+    background-color: #1f2937 !important;
+}
+
+body.dark .text-gray-900 {
+    color: #f9fafb !important;
+}
+
+body.dark .text-gray-600 {
+    color: #d1d5db !important;
+}
+
+body.dark input,
+body.dark select {
+    background-color: #111827;
+    color: #f9fafb;
+    border-color: #374151;
+}
+
+body.dark button {
+    border-color: #374151;
+}
+
+body.dark .shadow {
+    box-shadow: none;
+}

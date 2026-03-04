@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <main>
+        <form>
+            <h1>Create Account</h1>
+            <label for="username">Username:</label><br>
+            <input id="username" name="username" type="text" required minlength="3" placeholder="Min s characters"><br><br>
+            <label for="email">Email:</label><br>
+            <input type="email" name="email" id="email" required placeholder="your@gamil.com"><br><br>
+            <label for="password">Passward:</label><br>
+            <input type="password" required name="password" id="password" minlength="8" placeholder="Min 8 charactures"><br><br>
+            <label for="password">Confirm Password:</label><br>
+            <input type="password" required name="password" id="password" minlength="8"><br><br>
+            <label for="date">Date of Birth:</label><br>
+            <input type="date" required name="date" id="date"><br><br>
+            <label for="gender">Gender:</label><br>
+            <label for="male">Male</label><input type="radio">
+            <label for="female">Female</label><input type="radio">
+            <label for="other">Other</label><input type="radio"><br><br>
+            <label for="country">Country</label><br>
+            <select name="country" id="country">
+                <option value="">Select Country</option>
+                <option value="kh">Khmer</option>
+                <option value="chi">China</option>
+                <option value="eng">England</option>
+                <option value="fra">Franch</option>
+            </select><br><br>
+            <label for="agree">
+                <input type="checkbox" required>
+                I agree to the Terms and Conditions
+            </label><br><br>
+            <button type="submit">Create Account</button>
+        </form>
+    </main>
+</body>
+</html>

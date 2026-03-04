@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Personal Finance Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Vue 3 -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 p-6">
+<div id="app" class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+  <!-- ADD TRANSACTION -->
+  <div class="bg-white p-4 rounded shadow">
+    <h2 class="text-xl font-bold mb-3">Add Transaction</h2>
+
+    <select v-model="form.type" class="border p-2 w-full mb-2">
+      <option disabled value="">Type</option>
+      <option value="income">Income</option>
+      <option value="expense">Expense</option>
+    </select>
+
+    <select v-model="form.category" class="border p-2 w-full mb-2">
+      <option disabled value="">Category</option>
+      <optgroup label="Income">
+        <option>Salary</option>
+        <option>Freelance</option>
+        <option>Investment</option>
+        <option>Gift</option>
+        <option>Other</option>
+      </optgroup>
+      <optgroup label="Expense">
+        <option>Food</option>
+        <option>Transport</option>
+        <option>Rent</option>
+        <option>Utilities</option>
+        <option>Entertainment</option>
+        <option>Healthcare</option>
+        <option>Shopping</option>
+        <option>Other</option>
+      </optgroup>
+    </select>
+
+    <input type="number" v-model.number="form.amount"
+      placeholder="Amount"
+      class="border p-2 w-full mb-2" />
+
+    <input v-model="form.description"
+      placeholder="Description"
+      class="border p-2 w-full mb-2" />
+
+    <input type="date" v-model="form.date"
+      class="border p-2 w-full mb-2" />
+
+    <button
+      class="bg-blue-500 text-white w-full py-2 rounded"
+      @click="addTransaction(form)"
+    >
+      Add Transaction
+    </button>
+  </div>
+
+  <!-- TRANSACTIONS -->
+  <div class="bg-white p-4 rounded shadow lg:col-span-2">
+    <h2 class="text-xl font-bold mb-3">Transactions</h2>
+
+    <div class="flex gap-2 mb-3">
+      <select v-model="filters.type" class="border p-1">
+        <option value="">All</option>
+        <option value="income">Income</option>
+        <option value="expense">Expense</option>
+      </select>
+
+      <select v-model="filters.category" class="border p-1">
+        <option value="">All Categories</option>
+        <option v-for="c in allCategories" :key="c">{{ c }}</option>
+      </select>
+    </div>
+
+    <div v-for="t in filteredTransactions" :key="t.id"
+      class="border-b py-2 flex justify-between items-center">
+      <div>
+        <p class="font-semibold">
+          {{ t.description }} ({{ t.category }})
+        </p>
+        <p class="text-sm text-gray-500">{{ t.date }}</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <span
+          :class="t.type === 'income' ? 'text-green-600' : 'text-red-600'"
+        >
+          {{ t.type === 'income' ? '+' : '-' }}$ {{ t.amount }}
+        </span>
+        <button @click="deleteTransaction(t.id)"
+          class="text-red-500 text-sm">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUMMARY -->
+  <div class="bg-white p-4 rounded shadow lg:col-span-3 grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="p-3 bg-green-100 rounded">
+      <p>Total Income</p>
+      <strong>$ {{ totalIncome.toFixed(2) }}</strong>
+    </div>
+    <div class="p-3 bg-red-100 rounded">
+      <p>Total Expenses</p>
+      <strong>$ {{ totalExpenses.toFixed(2) }}</strong>
+    </div>
+    <div class="p-3 bg-blue-100 rounded">
+      <p>Balance</p>
+      <strong>$ {{ balance.toFixed(2) }}</strong>
+    </div>
+    <div class="p-3 bg-purple-100 rounded">
+      <p>Savings Rate</p>
+      <strong>{{ savingsRate.toFixed(1) }}%</strong>
+    </div>
+  </div>
+
+  <!-- DETAILS -->
+  <div class="bg-white p-4 rounded shadow lg:col-span-3">
+    <p><strong>Financial Health:</strong> {{ financialHealth }}</p>
+    <p><strong>Largest Expense:</strong> {{ largestExpense?.amount || '-' }}</p>
+    <p><strong>Average Expense:</strong> $ {{ averageExpense.toFixed(2) }}</p>
+
+    <h3 class="font-bold mt-3">Expense Breakdown</h3>
+    <div v-for="(v, k) in expensePercentages" :key="k">
+      {{ k }} – {{ v.toFixed(1) }}%
+    </div>
+
+    <h3 class="font-bold mt-3">Recent Transactions</h3>
+    <ul class="list-disc ml-6">
+      <li v-for="t in recentTransactions" :key="t.id">
+        {{ t.description }} – ${{ t.amount }}
+      </li>
+    </ul>
+  </div>
+
+</div>
+
+<script>
+const { createApp } = Vue;
+
+createApp({
+  data() {
+    return {
+      transactions: JSON.parse(localStorage.getItem('transactions')) || [],
+      form: {
+        type: '',
+        category: '',
+        amount: 0,
+        description: '',
+        date: ''
+      },
+      filters: {
+        type: '',
+        category: ''
+      }
+    };
+  },
+
+  computed: {
+    allCategories() {
+      return [...new Set(this.transactions.map(t => t.category))];
+    },
+    filteredTransactions() {
+      return this.transactions.filter(t => {
+        return (
+          (!this.filters.type || t.type === this.filters.type) &&
+          (!this.filters.category || t.category === this.filters.category)
+        );
+      });
+    },
+    totalIncome() {
+      return this.transactions
+        .filter(t => t.type === 'income')
+        .reduce((s, t) => s + t.amount, 0);
+    },
+    totalExpenses() {
+      return this.transactions
+        .filter(t => t.type === 'expense')
+        .reduce((s, t) => s + t.amount, 0);
+    },
+    balance() {
+      return this.totalIncome - this.totalExpenses;
+    },
+    incomeByCategory() {
+      return this.groupByCategory('income');
+    },
+    expensesByCategory() {
+      return this.groupByCategory('expense');
+    },
+    largestExpense() {
+      return this.transactions
+        .filter(t => t.type === 'expense')
+        .sort((a, b) => b.amount - a.amount)[0];
+    },
+    averageExpense() {
+      const ex = this.transactions.filter(t => t.type === 'expense');
+      return ex.length ? ex.reduce((s, t) => s + t.amount, 0) / ex.length : 0;
+    },
+    expensePercentages() {
+      const total = this.totalExpenses || 1;
+      const obj = {};
+      for (const [k, v] of Object.entries(this.expensesByCategory)) {
+        obj[k] = (v / total) * 100;
+      }
+      return obj;
+    },
+    monthlyAverage() {
+      const months = new Set(this.transactions.map(t => t.date.slice(0, 7)));
+      return months.size ? this.totalExpenses / months.size : 0;
+    },
+    savingsRate() {
+      return this.totalIncome
+        ? ((this.balance / this.totalIncome) * 100)
+        : 0;
+    },
+    financialHealth() {
+      if (this.savingsRate >= 30) return 'Excellent';
+      if (this.savingsRate >= 20) return 'Good';
+      if (this.savingsRate >= 10) return 'Fair';
+      return 'Poor';
+    },
+    recentTransactions() {
+      return [...this.transactions].slice(-5).reverse();
+    }
+  },
+
+  methods: {
+    addTransaction(t) {
+      if (!t.type || !t.category || !t.amount || !t.date) return;
+      this.transactions.push({ ...t, id: Date.now() });
+      this.form = { type: '', category: '', amount: 0, description: '', date: '' };
+    },
+    editTransaction(id, updates) {
+      const t = this.transactions.find(t => t.id === id);
+      if (t) Object.assign(t, updates);
+    },
+    deleteTransaction(id) {
+      this.transactions = this.transactions.filter(t => t.id !== id);
+    },
+    filterByType(type) {
+      this.filters.type = type;
+    },
+    filterByCategory(cat) {
+      this.filters.category = cat;
+    },
+    filterByDateRange(start, end) {
+      this.transactions = this.transactions.filter(
+        t => t.date >= start && t.date <= end
+      );
+    },
+    exportData(type = 'json') {
+      const data = JSON.stringify(this.transactions, null, 2);
+      alert(data);
+    },
+    clearAllData() {
+      this.transactions = [];
+      localStorage.clear();
+    },
+    groupByCategory(type) {
+      return this.transactions
+        .filter(t => t.type === type)
+        .reduce((acc, t) => {
+          acc[t.category] = (acc[t.category] || 0) + t.amount;
+          return acc;
+        }, {});
+    }
+  },
+
+  watch: {
+    balance(val) {
+      if (val < 0) alert('⚠️ Balance is negative!');
+    },
+    totalExpenses(val) {
+      if (val > this.totalIncome) {
+        console.warn('Expenses exceed income!');
+      }
+    },
+    transactions: {
+      deep: true,
+      handler(v) {
+        localStorage.setItem('transactions', JSON.stringify(v));
+      }
+    }
+  }
+}).mount('#app');
+</script>
+</body>
+</html>

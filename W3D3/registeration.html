@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Vue + Tailwind Advanced Form</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 p-6">
+<div id="app" class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow">
+
+  <h1 class="text-3xl font-bold mb-6">Registration Form</h1>
+
+  <!-- Progress bar -->
+  <div class="w-full bg-gray-200 rounded-full h-3 mb-4">
+    <div class="h-3 bg-blue-500 rounded-full transition-all"
+         :style="{ width: progress + '%' }"></div>
+  </div>
+
+  <p class="mb-6 font-semibold"
+     :class="isFormValid ? 'text-green-600' : 'text-red-600'">
+    {{ isFormValid ? 'Form is valid ✅' : 'Please fix errors ❌' }}
+  </p>
+
+  <form @submit.prevent class="space-y-4">
+
+    <!-- Username -->
+    <div>
+      <label class="font-semibold">Username</label>
+      <input v-model="form.username"
+             class="w-full border rounded px-3 py-2"
+             :class="borderClass(errors.username)"
+             autocomplete="username">
+      <p v-if="errors.username" class="text-red-500 text-sm">{{ errors.username }}</p>
+    </div>
+
+    <!-- Email -->
+    <div>
+      <label class="font-semibold">Email</label>
+      <input v-model="form.email"
+             class="w-full border rounded px-3 py-2"
+             :class="borderClass(errors.email)"
+             autocomplete="email">
+      <p v-if="errors.email" class="text-red-500 text-sm">{{ errors.email }}</p>
+    </div>
+
+    <!-- Password -->
+    <div>
+      <label class="font-semibold">Password</label>
+      <div class="flex gap-2">
+        <input :type="showPassword ? 'text' : 'password'"
+               v-model="form.password"
+               class="w-full border rounded px-3 py-2"
+               :class="borderClass(errors.password)">
+        <button type="button"
+                @click="showPassword = !showPassword"
+                class="px-3 bg-gray-200 rounded">
+          👁
+        </button>
+      </div>
+      <p class="text-sm mt-1">Strength: {{ passwordStrength }}</p>
+      <p v-if="errors.password" class="text-red-500 text-sm">{{ errors.password }}</p>
+    </div>
+
+    <!-- Confirm Password -->
+    <div>
+      <label class="font-semibold">Confirm Password</label>
+      <input type="password"
+             v-model="form.confirmPassword"
+             class="w-full border rounded px-3 py-2"
+             :class="borderClass(errors.confirmPassword)">
+      <p v-if="errors.confirmPassword" class="text-red-500 text-sm">
+        {{ errors.confirmPassword }}
+      </p>
+    </div>
+
+    <!-- Age -->
+    <div>
+      <label class="font-semibold">Age</label>
+      <input type="number"
+             v-model="form.age"
+             class="w-full border rounded px-3 py-2"
+             :class="borderClass(errors.age)">
+      <p v-if="errors.age" class="text-red-500 text-sm">{{ errors.age }}</p>
+    </div>
+
+    <!-- Phone -->
+    <div>
+      <label class="font-semibold">Phone</label>
+      <input v-model="form.phone"
+             placeholder="+85512345678"
+             class="w-full border rounded px-3 py-2"
+             :class="borderClass(errors.phone)">
+      <p v-if="errors.phone" class="text-red-500 text-sm">{{ errors.phone }}</p>
+    </div>
+
+    <!-- Country -->
+    <div>
+      <label class="font-semibold">Country</label>
+      <select v-model="form.country"
+              class="w-full border rounded px-3 py-2"
+              :class="borderClass(errors.country)">
+        <option disabled value="">Select country</option>
+        <option v-for="c in countries" :key="c">{{ c }}</option>
+      </select>
+      <p v-if="errors.country" class="text-red-500 text-sm">{{ errors.country }}</p>
+    </div>
+
+    <!-- Gender -->
+    <div>
+      <label class="font-semibold">Gender</label>
+      <div class="flex gap-4">
+        <label v-for="g in genders" :key="g">
+          <input type="radio" v-model="form.gender" :value="g"> {{ g }}
+        </label>
+      </div>
+    </div>
+
+    <!-- Interests -->
+    <div>
+      <label class="font-semibold">Interests</label>
+      <div class="grid grid-cols-3 gap-2">
+        <label v-for="i in interests" :key="i">
+          <input type="checkbox" v-model="form.interests" :value="i"> {{ i }}
+        </label>
+      </div>
+    </div>
+
+    <!-- Bio -->
+    <div>
+      <label class="font-semibold">Bio</label>
+      <textarea v-model="form.bio"
+                maxlength="500"
+                class="w-full border rounded px-3 py-2 h-24"></textarea>
+      <p class="text-sm text-gray-500">{{ form.bio.length }}/500</p>
+    </div>
+
+    <!-- Checkboxes -->
+    <div class="space-y-2">
+      <label><input type="checkbox" v-model="form.isPublic"> Public profile</label><br>
+      <label><input type="checkbox" v-model="form.newsletter"> Subscribe newsletter</label><br>
+      <label>
+        <input type="checkbox" v-model="form.terms"> Accept terms (required)
+      </label>
+      <p v-if="errors.terms" class="text-red-500 text-sm">{{ errors.terms }}</p>
+    </div>
+
+    <!-- Buttons -->
+    <div class="flex gap-4 pt-4">
+      <button :disabled="!isFormValid"
+              class="px-6 py-2 bg-blue-500 text-white rounded disabled:opacity-50">
+        Submit
+      </button>
+      <button type="button"
+              @click="resetForm"
+              class="px-6 py-2 bg-gray-300 rounded">
+        Reset
+      </button>
+    </div>
+  </form>
+
+  <!-- Preview -->
+  <div class="mt-6 bg-gray-100 p-4 rounded">
+    <h3 class="font-semibold mb-2">Form Preview</h3>
+    <pre class="text-sm">{{ form }}</pre>
+  </div>
+
+</div>
+
+<script>
+const { createApp } = Vue;
+
+createApp({
+  data() {
+    return {
+      showPassword: false,
+      form: JSON.parse(localStorage.getItem('draft')) || {
+        username: '', email: '', password: '', confirmPassword: '',
+        age: '', phone: '', country: '', gender: '',
+        interests: [], bio: '',
+        isPublic: false, newsletter: false, terms: false
+      },
+      errors: {},
+      countries: ['USA','Canada','UK','France','Germany','Japan','China','India','Thailand','Cambodia'],
+      genders: ['Male','Female','Other','Prefer not to say'],
+      interests: ['Music','Sports','Tech','Travel','Gaming','Art']
+    }
+  },
+  computed: {
+    passwordStrength() {
+      const p = this.form.password;
+      if (p.length < 8) return 'Weak';
+      if (/(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^A-Za-z0-9])/.test(p)) return 'Strong';
+      return 'Medium';
+    },
+    isFormValid() {
+      return Object.keys(this.errors).length === 0 && this.form.terms;
+    },
+    progress() {
+      const filled = Object.values(this.form).filter(v =>
+        Array.isArray(v) ? v.length : v
+      ).length;
+      return Math.min(100, filled * 8);
+    }
+  },
+  watch: {
+    form: {
+      deep: true,
+      handler() {
+        this.validate();
+        localStorage.setItem('draft', JSON.stringify(this.form));
+      }
+    }
+  },
+  methods: {
+    borderClass(error) {
+      return error ? 'border-red-500' : 'border-green-500';
+    },
+    validate() {
+      const e = {};
+      if (!/^[a-z0-9]{3,20}$/i.test(this.form.username)) e.username = '3–20 alphanumeric characters';
+      if (!/^\S+@\S+\.\S+$/.test(this.form.email)) e.email = 'Invalid email';
+      if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}/.test(this.form.password))
+        e.password = 'Password too weak';
+      if (this.form.password !== this.form.confirmPassword)
+        e.confirmPassword = 'Passwords do not match';
+      if (this.form.age < 13 || this.form.age > 120) e.age = 'Age must be 13–120';
+      if (!/^\+?\d{8,15}$/.test(this.form.phone)) e.phone = 'Invalid phone number';
+      if (!this.form.country) e.country = 'Required';
+      if (!this.form.terms) e.terms = 'You must accept terms';
+      this.errors = e;
+    },
+    resetForm() {
+      localStorage.removeItem('draft');
+      location.reload();
+    }
+  },
+  mounted() {
+    this.validate();
+  }
+}).mount('#app');
+</script>
+
+</body>
+</html>

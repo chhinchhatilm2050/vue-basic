@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vue Product Page Demo</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+
+<div id="app" class="max-w-7xl mx-auto p-4">
+
+  <div class="flex flex-col md:flex-row gap-8">
+    <!-- Product Gallery -->
+    <product-gallery :images="product.images"></product-gallery>
+
+    <!-- Product Details -->
+    <div class="flex-1 space-y-4">
+      <product-info :product="product"></product-info>
+      <product-options :options="product.options" v-model="selectedOptions"></product-options>
+      <quantity-selector :stock="product.stock" v-model="quantity"></quantity-selector>
+      <add-to-cart :product="product" :quantity="quantity" @add-to-cart="addToCart"></add-to-cart>
+      <price-display :original-price="product.price" :sale-price="product.salePrice"></price-display>
+      <rating-stars :rating="product.rating" :total-reviews="product.reviews.length"></rating-stars>
+    </div>
+  </div>
+
+  <!-- Product Tabs -->
+  <product-tabs :description="product.description" :specs="product.specifications" :reviews="product.reviews"></product-tabs>
+</div>
+
+<script>
+const { createApp, ref, reactive, computed } = Vue;
+
+createApp({
+  setup() {
+    const product = reactive({
+      id: 1,
+      name: "Awesome Product",
+      price: 120,
+      salePrice: 90,
+      rating: 4.2,
+      stock: 10,
+      sku: "PROD123",
+      category: "Gadgets",
+      description: "This is a detailed description of the awesome product. It has amazing features and benefits.",
+      specifications: "Weight: 1kg\nDimensions: 10x10x10cm\nColor: Multiple options",
+      images: [
+        "https://via.placeholder.com/400x400?text=Image1",
+        "https://via.placeholder.com/400x400?text=Image2",
+        "https://via.placeholder.com/400x400?text=Image3"
+      ],
+      options: [
+        { name: "Size", values: [{label:"S", stock:true}, {label:"M", stock:true}, {label:"L", stock:false}] },
+        { name: "Color", values: [{label:"Red", stock:true}, {label:"Blue", stock:true}, {label:"Green", stock:true}] }
+      ],
+      reviews: [
+        { id:1, name:"Alice", avatar:"", rating:5, text:"Great product!", helpful:3, date:"2026-02-01" },
+        { id:2, name:"Bob", avatar:"", rating:4, text:"Good value for money.", helpful:1, date:"2026-02-02" }
+      ]
+    });
+
+    const selectedOptions = reactive({});
+    const quantity = ref(1);
+
+    const addToCart = () => {
+      alert(`Added ${quantity.value} of ${product.name} to cart with options: ${JSON.stringify(selectedOptions)}`);
+    };
+
+    return { product, selectedOptions, quantity, addToCart };
+  },
+
+  components: {
+
+    // Product Gallery
+    'product-gallery': {
+      props: ['images'],
+      data() { return { mainImage: this.images[0] }; },
+      template: `
+        <div class="flex flex-col items-center">
+          <div class="w-96 h-96 overflow-hidden rounded mb-2 relative group">
+            <img :src="mainImage" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110">
+          </div>
+          <div class="flex gap-2">
+            <img v-for="img in images" :key="img" :src="img" class="w-20 h-20 object-cover rounded cursor-pointer border" @click="mainImage = img">
+          </div>
+        </div>
+      `
+    },
+
+    // Product Info
+    'product-info': {
+      props: ['product'],
+      template: `
+        <div>
+          <h2 class="text-3xl font-bold">{{ product.name }}</h2>
+          <p class="text-gray-500">{{ product.category }} | SKU: {{ product.sku }}</p>
+          <p class="mt-2 text-lg">{{ product.stock > 0 ? 'In Stock' : 'Out of Stock' }}</p>
+          <p class="mt-2">{{ product.description.slice(0, 100) }}...</p>
+        </div>
+      `
+    },
+
+    // Product Options
+    'product-options': {
+      props: ['options', 'modelValue'],
+      emits: ['update:modelValue'],
+      methods: {
+        select(optionName, value) {
+          this.$emit('update:modelValue', { ...this.modelValue, [optionName]: value });
+        }
+      },
+      template: `
+        <div class="space-y-2">
+          <div v-for="opt in options" :key="opt.name">
+            <p class="font-semibold">{{ opt.name }}</p>
+            <div class="flex gap-2">
+              <button 
+                v-for="v in opt.values" 
+                :key="v.label" 
+                @click="select(opt.name, v.label)" 
+                :disabled="!v.stock"
+                :class="['px-3 py-1 rounded border', !v.stock ? 'bg-gray-200 cursor-not-allowed' : 'bg-white hover:bg-gray-100']">
+                {{ v.label }}
+              </button>
+            </div>
+          </div>
+        </div>
+      `
+    },
+
+    // Quantity Selector
+    'quantity-selector': {
+      props: ['stock', 'modelValue'],
+      emits: ['update:modelValue'],
+      methods: {
+        change(val) {
+          let newVal = this.modelValue + val;
+          if(newVal < 1) newVal = 1;
+          if(newVal > this.stock) newVal = this.stock;
+          this.$emit('update:modelValue', newVal);
+        }
+      },
+      template: `
+        <div class="flex items-center gap-2 mt-2">
+          <button @click="change(-1)" class="px-3 py-1 bg-gray-200 rounded">-</button>
+          <input type="number" v-model.number="modelValue" min="1" :max="stock" class="w-16 text-center border rounded">
+          <button @click="change(1)" class="px-3 py-1 bg-gray-200 rounded">+</button>
+        </div>
+      `
+    },
+
+    // Add to Cart
+    'add-to-cart': {
+      props: ['product', 'quantity'],
+      emits: ['add-to-cart'],
+      data() { return { clicked:false }; },
+      template: `
+        <button 
+          @click="handleClick" 
+          :disabled="product.stock<1"
+          class="mt-2 px-4 py-2 bg-green-500 text-white rounded disabled:bg-gray-300">
+          Add to Cart
+        </button>
+      `,
+      methods: {
+        handleClick() {
+          this.clicked=true;
+          this.$emit('add-to-cart');
+          setTimeout(()=>this.clicked=false,300);
+        }
+      }
+    },
+
+    // Price Display
+    'price-display': {
+      props: ['originalPrice','salePrice'],
+      computed: {
+        discount() {
+          if(this.salePrice && this.salePrice < this.originalPrice) {
+            return Math.round((this.originalPrice - this.salePrice)/this.originalPrice*100);
+          }
+          return 0;
+        }
+      },
+      template: `
+        <div class="mt-2 text-lg">
+          <span v-if="salePrice < originalPrice" class="line-through text-gray-500 mr-2">\${{ originalPrice }}</span>
+          <span class="font-bold text-green-600">\${{ salePrice || originalPrice }}</span>
+          <span v-if="discount" class="ml-2 text-red-500 font-semibold">Save {{ discount }}%</span>
+        </div>
+      `
+    },
+
+    // Rating Stars
+    'rating-stars': {
+      props: ['rating','totalReviews'],
+      template: `
+        <div class="flex items-center gap-2 mt-2">
+          <div class="flex">
+            <span v-for="i in 5" :key="i" class="text-yellow-400">
+              <template v-if="rating>=i">★</template>
+              <template v-else-if="rating>i-1 && rating<i">★</template>
+              <template v-else>☆</template>
+            </span>
+          </div>
+          <span class="text-gray-600">({{ totalReviews }} reviews)</span>
+        </div>
+      `
+    },
+
+    // Review Card
+    'review-card': {
+      props: ['review'],
+      data() { return { helpfulClicked:false }; },
+      template: `
+        <div class="border p-2 rounded mb-2">
+          <p class="font-semibold">{{ review.name }} <span class="text-gray-500 text-sm">{{ review.date }}</span></p>
+          <rating-stars :rating="review.rating" :total-reviews="0"></rating-stars>
+          <p class="mt-1">{{ review.text }}</p>
+          <button @click="helpfulClicked=!helpfulClicked" class="text-sm mt-1 text-blue-500">Helpful ({{ helpfulClicked ? review.helpful+1 : review.helpful }})</button>
+        </div>
+      `
+    },
+
+    // Product Tabs
+    'product-tabs': {
+      props: ['description','specs','reviews'],
+      data() { return { activeTab:'Description' }; },
+      template: `
+        <div class="mt-6 bg-white p-4 rounded shadow">
+          <div class="flex gap-4 border-b mb-2">
+            <button @click="activeTab='Description'" :class="activeTab==='Description' ? 'border-b-2 border-blue-500 font-semibold' : ''">Description</button>
+            <button @click="activeTab='Specifications'" :class="activeTab==='Specifications' ? 'border-b-2 border-blue-500 font-semibold' : ''">Specifications</button>
+            <button @click="activeTab='Reviews'" :class="activeTab==='Reviews' ? 'border-b-2 border-blue-500 font-semibold' : ''">Reviews</button>
+          </div>
+          <div>
+            <div v-if="activeTab==='Description'"><p>{{ description }}</p></div>
+            <div v-if="activeTab==='Specifications'"><pre>{{ specs }}</pre></div>
+            <div v-if="activeTab==='Reviews'">
+              <review-card v-for="r in reviews" :key="r.id" :review="r"></review-card>
+            </div>
+          </div>
+        </div>
+      `
+    }
+
+  }
+}).mount('#app');
+</script>
+</body>
+</html>

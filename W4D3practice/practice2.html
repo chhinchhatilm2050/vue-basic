@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scoped Slots – WORKING</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 p-8">
+<div id="app">
+  <div class="max-w-6xl mx-auto">
+    <h1 class="text-3xl font-bold mb-8">Scoped Slots – Actually Working</h1>
+
+    <!-- SIMPLE LIST -->
+    <div class="bg-white p-6 rounded shadow mb-6">
+      <h2 class="font-bold mb-4">Simple List</h2>
+      <data-list :items="users" v-slot="{ item }">
+        <div v-if="item" class="border-b py-2">
+          <p class="font-semibold">{{ item.name }}</p>
+          <p class="text-sm text-gray-500">{{ item.email }}</p>
+        </div>
+      </data-list>
+    </div>
+
+    <!-- GRID -->
+    <div class="bg-white p-6 rounded shadow mb-6">
+      <h2 class="font-bold mb-4">Grid</h2>
+      <div class="grid grid-cols-2 gap-4">
+        <data-list :items="users" v-slot="{ item }">
+          <div v-if="item" class="border p-3 rounded">
+            <div
+              class="w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center mb-2"
+            >
+              {{ item.name.charAt(0) }}
+            </div>
+            <p class="font-semibold text-sm">{{ item.name }}</p>
+            <p class="text-xs text-gray-500">{{ item.role }}</p>
+          </div>
+        </data-list>
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="bg-white p-6 rounded shadow">
+      <h2 class="font-bold mb-4">Table</h2>
+      <table class="w-full border">
+        <thead>
+          <tr class="bg-gray-100">
+            <th class="p-2 text-left">Name</th>
+            <th class="p-2 text-left">Email</th>
+            <th class="p-2 text-left">Role</th>
+          </tr>
+        </thead>
+        <tbody>
+          <data-list :items="users" v-slot="{ item }">
+            <tr v-if="item" class="border-t">
+              <td class="p-2">{{ item.name }}</td>
+              <td class="p-2 text-sm text-gray-500">{{ item.email }}</td>
+              <td class="p-2">{{ item.role }}</td>
+            </tr>
+          </data-list>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const { createApp } = Vue;
+
+const app = createApp({
+  data() {
+    return {
+      users: [
+        { id: 1, name: 'Alice Johnson', email: 'alice@example.com', role: 'Developer' },
+        { id: 2, name: 'Bob Smith', email: 'bob@example.com', role: 'Designer' },
+        { id: 3, name: 'Carol White', email: 'carol@example.com', role: 'Manager' }
+      ]
+    };
+  }
+});
+
+// ✅ CORRECT data-list (fragment + safe)
+app.component('data-list', {
+  props: {
+    items: {
+      type: Array,
+      required: true
+    }
+  },
+  template: `
+    <template v-for="(item, index) in items" :key="item.id">
+      <slot :item="item" :index="index"></slot>
+    </template>
+  `
+});
+
+app.mount('#app');
+</script>
+</body>
+</html>

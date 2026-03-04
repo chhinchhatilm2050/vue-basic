@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Recipe Calculator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Vue 3 -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 p-6">
+<div id="app" class="max-w-5xl mx-auto bg-white rounded shadow p-6">
+
+  <!-- TITLE -->
+  <div class="flex flex-col md:flex-row gap-6 mb-6">
+    <img
+      src="https://images.unsplash.com/photo-1601972599720-36938d4ecd31"
+      class="w-full md:w-1/3 rounded object-cover"
+    />
+
+    <div>
+      <h1 class="text-3xl font-bold">{{ recipe.name }}</h1>
+      <p class="text-gray-600 mt-2">
+        Category: <strong>{{ recipeCategory }}</strong>
+      </p>
+      <p class="mt-1">Difficulty: <strong>{{ difficulty }}</strong></p>
+    </div>
+  </div>
+
+  <!-- SERVINGS -->
+  <div class="flex items-center gap-4 mb-6">
+    <button @click="scaleRecipe(desiredServings - 1)"
+      class="px-3 py-1 bg-gray-200 rounded">−</button>
+
+    <input type="number" min="1"
+      v-model.number="desiredServings"
+      class="border p-1 w-20 text-center" />
+
+    <button @click="scaleRecipe(desiredServings + 1)"
+      class="px-3 py-1 bg-gray-200 rounded">+</button>
+
+    <span class="text-sm text-gray-500">
+      Original: {{ originalServings }} servings
+    </span>
+
+    <button @click="resetServings"
+      class="ml-auto text-sm text-blue-600">Reset</button>
+  </div>
+
+  <!-- TIME INFO -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div class="p-3 bg-gray-50 rounded">Prep: {{ recipe.prepTime }} min</div>
+    <div class="p-3 bg-gray-50 rounded">Cook: {{ recipe.cookTime }} min</div>
+    <div class="p-3 bg-gray-50 rounded">Total: {{ totalTime }} min</div>
+    <div class="p-3 bg-gray-50 rounded">Per Serving: {{ timePerServing.toFixed(1) }} min</div>
+  </div>
+
+  <!-- INGREDIENTS -->
+  <h2 class="text-xl font-bold mb-2">Ingredients</h2>
+  <ul class="list-disc ml-6 mb-6">
+    <li v-for="(ing, i) in scaledIngredients" :key="i">
+      {{ ingredientsList[i] }}
+      <button @click="removeIngredient(i)" class="text-red-500 ml-2 text-sm">✕</button>
+    </li>
+  </ul>
+
+  <!-- ADD INGREDIENT -->
+  <div class="flex gap-2 mb-6">
+    <input v-model="newIngredient.name" placeholder="Name" class="border p-1 w-1/3" />
+    <input type="number" v-model.number="newIngredient.amount" placeholder="Amount" class="border p-1 w-1/4" />
+    <input v-model="newIngredient.unit" placeholder="Unit" class="border p-1 w-1/4" />
+    <button @click="addIngredient(newIngredient)"
+      class="bg-green-500 text-white px-3 rounded">Add</button>
+  </div>
+
+  <!-- INSTRUCTIONS -->
+  <h2 class="text-xl font-bold mb-2">Instructions</h2>
+  <ol class="list-decimal ml-6 mb-6">
+    <li v-for="(step, i) in recipe.instructions" :key="i">
+      {{ step }}
+    </li>
+  </ol>
+
+  <!-- EXTRA INFO -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div class="bg-yellow-50 p-3 rounded">
+      Calories / Serving: {{ nutritionEstimate }}
+    </div>
+    <div class="bg-blue-50 p-3 rounded">
+      Estimated Cost: ${{ costEstimate.toFixed(2) }}
+    </div>
+    <div class="bg-purple-50 p-3 rounded">
+      Equipment: {{ requiredEquipment.join(', ') }}
+    </div>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="flex gap-3">
+    <button @click="printRecipe"
+      class="bg-gray-800 text-white px-4 py-2 rounded">
+      Print
+    </button>
+    <button @click="shareRecipe"
+      class="bg-blue-600 text-white px-4 py-2 rounded">
+      Share
+    </button>
+  </div>
+
+</div>
+
+<script>
+const { createApp } = Vue;
+
+createApp({
+  data() {
+    return {
+      originalServings: 8,
+      desiredServings: 8,
+      recipe: {
+        name: 'Chocolate Cake',
+        servings: 8,
+        prepTime: 30,
+        cookTime: 45,
+        ingredients: [
+          { name: 'Flour', amount: 2, unit: 'cups' },
+          { name: 'Sugar', amount: 1.5, unit: 'cups' },
+          { name: 'Eggs', amount: 3, unit: 'pcs' },
+          { name: 'Butter', amount: 0.5, unit: 'cups' },
+          { name: 'Cocoa Powder', amount: 0.75, unit: 'cups' }
+        ],
+        instructions: [
+          'Preheat oven to 180°C.',
+          'Mix dry ingredients.',
+          'Add wet ingredients.',
+          'Pour into pan.',
+          'Bake until done.'
+        ]
+      },
+      newIngredient: { name: '', amount: 0, unit: '' }
+    };
+  },
+
+  computed: {
+    totalTime() {
+      return this.recipe.prepTime + this.recipe.cookTime;
+    },
+    servingsMultiplier() {
+      return this.desiredServings / this.originalServings;
+    },
+    scaledIngredients() {
+      return this.recipe.ingredients.map(i => ({
+        ...i,
+        amount: +(i.amount * this.servingsMultiplier).toFixed(2)
+      }));
+    },
+    ingredientsList() {
+      return this.scaledIngredients.map(
+        i => `${i.amount} ${i.unit} ${i.name}`
+      );
+    },
+    timePerServing() {
+      return this.totalTime / this.desiredServings;
+    },
+    difficulty() {
+      if (this.totalTime > 90 || this.recipe.ingredients.length > 8) return 'Hard';
+      if (this.totalTime > 45) return 'Medium';
+      return 'Easy';
+    },
+    costEstimate() {
+      return this.scaledIngredients.reduce((s, i) => s + i.amount * 2, 0);
+    },
+    nutritionEstimate() {
+      return Math.round(300 * this.servingsMultiplier);
+    },
+    recipeCategory() {
+      return 'Dessert';
+    },
+    requiredEquipment() {
+      return ['Oven', 'Mixing Bowl', 'Whisk', 'Baking Pan'];
+    }
+  },
+
+  methods: {
+    scaleRecipe(newServings) {
+      if (newServings < 1) return;
+      this.desiredServings = newServings;
+    },
+    resetServings() {
+      this.desiredServings = this.originalServings;
+    },
+    addIngredient(ingredient) {
+      if (!ingredient.name || !ingredient.amount) return;
+      this.recipe.ingredients.push({ ...ingredient });
+      this.newIngredient = { name: '', amount: 0, unit: '' };
+    },
+    removeIngredient(index) {
+      this.recipe.ingredients.splice(index, 1);
+    },
+    updateIngredient(index, updates) {
+      Object.assign(this.recipe.ingredients[index], updates);
+    },
+    convertUnits(amount, from, to) {
+      const map = { cups: 1, tbsp: 0.0625 };
+      return ((amount * map[from]) / map[to]).toFixed(2);
+    },
+    printRecipe() {
+      window.print();
+    },
+    shareRecipe() {
+      const text = `${this.recipe.name}\nIngredients:\n${this.ingredientsList.join('\n')}`;
+      alert(text);
+    }
+  }
+}).mount('#app');
+</script>
+</body>
+</html>

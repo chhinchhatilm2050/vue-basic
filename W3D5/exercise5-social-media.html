@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Social Media Feed Demo</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+
+<div id="app" class="min-h-screen">
+
+  <!-- Nav Bar -->
+  <social-nav :notifications="notifications" :messages="messages"></social-nav>
+
+  <div class="max-w-7xl mx-auto flex gap-4 p-4">
+
+    <!-- Main Feed -->
+    <div class="flex-1 space-y-4">
+
+      <!-- Stories Bar -->
+      <stories-bar :users="stories"></stories-bar>
+
+      <!-- Post Creator -->
+      <post-creator v-model="newPostContent" @post-created="createPost"></post-creator>
+
+      <!-- Posts Feed -->
+      <feed-post v-for="post in posts" :key="post.id" :post="post" @toggle-like="toggleLike(post.id)"></feed-post>
+
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="w-72 space-y-4">
+
+      <suggested-users :users="suggestedUsers"></suggested-users>
+
+      <friend-request v-for="req in friendRequests" :key="req.id" :request="req" @accept="acceptFriend(req.id)" @decline="declineFriend(req.id)"></friend-request>
+
+    </aside>
+
+  </div>
+
+</div>
+
+<script>
+const { createApp, reactive, ref } = Vue;
+
+createApp({
+  setup() {
+    const notifications = ref(3);
+    const messages = ref(5);
+    const newPostContent = ref("");
+
+    const posts = reactive([
+      { id:1, user:{name:"Alice", avatar:""}, content:"This is my first post!", image:"https://via.placeholder.com/400x200", likes:3, liked:false, comments:2 },
+      { id:2, user:{name:"Bob", avatar:""}, content:"Check out this cool pic", image:"https://via.placeholder.com/400x200", likes:5, liked:false, comments:1 },
+      { id:3, user:{name:"Charlie", avatar:""}, content:"Having a great day!", image:null, likes:2, liked:false, comments:0 },
+      { id:4, user:{name:"Dana", avatar:""}, content:"Vue 3 is awesome!", image:null, likes:7, liked:false, comments:3 },
+      { id:5, user:{name:"Eve", avatar:""}, content:"Happy weekend everyone!", image:"https://via.placeholder.com/400x200", likes:4, liked:false, comments:1 },
+    ]);
+
+    const stories = reactive([
+      { id:1, name:"Alice", avatar:"", hasUnseen:true },
+      { id:2, name:"Bob", avatar:"", hasUnseen:false },
+      { id:3, name:"Charlie", avatar:"", hasUnseen:true },
+      { id:4, name:"Dana", avatar:"", hasUnseen:false },
+      { id:5, name:"Eve", avatar:"", hasUnseen:true },
+    ]);
+
+    const suggestedUsers = reactive([
+      { id:1, name:"Frank", mutual:5 },
+      { id:2, name:"Grace", mutual:3 },
+      { id:3, name:"Hannah", mutual:2 },
+      { id:4, name:"Ian", mutual:1 },
+      { id:5, name:"Jack", mutual:4 },
+    ]);
+
+    const friendRequests = reactive([
+      { id:1, name:"Kelly", mutual:3 },
+      { id:2, name:"Liam", mutual:2 },
+    ]);
+
+    const toggleLike = (id) => {
+      const post = posts.find(p=>p.id===id);
+      post.liked = !post.liked;
+      post.likes += post.liked ? 1 : -1;
+    };
+
+    const createPost = () => {
+      if(newPostContent.value.trim()==="") return;
+      posts.unshift({
+        id:Date.now(),
+        user:{name:"You", avatar:""},
+        content:newPostContent.value,
+        image:null,
+        likes:0,
+        liked:false,
+        comments:0
+      });
+      newPostContent.value="";
+    };
+
+    const acceptFriend = (id) => {
+      const index = friendRequests.findIndex(f=>f.id===id);
+      if(index!==-1) friendRequests.splice(index,1);
+    };
+
+    const declineFriend = (id) => {
+      const index = friendRequests.findIndex(f=>f.id===id);
+      if(index!==-1) friendRequests.splice(index,1);
+    };
+
+    return { notifications, messages, posts, stories, suggestedUsers, friendRequests, newPostContent, toggleLike, createPost, acceptFriend, declineFriend };
+  },
+
+  components: {
+
+    // Nav Bar
+    'social-nav': {
+      props:['notifications','messages'],
+      template:`
+        <nav class="bg-white shadow p-4 flex justify-between items-center">
+          <div class="flex items-center gap-4">
+            <span class="font-bold text-xl cursor-pointer">🌐 SocialApp</span>
+            <input type="text" placeholder="Search..." class="border rounded px-2 py-1">
+          </div>
+          <div class="flex items-center gap-4">
+            <div class="relative cursor-pointer">🏠</div>
+            <div class="relative cursor-pointer">
+              💬
+              <span v-if="messages>0" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1">{{ messages }}</span>
+            </div>
+            <div class="relative cursor-pointer">
+              🔔
+              <span v-if="notifications>0" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1">{{ notifications }}</span>
+            </div>
+            <div class="cursor-pointer">👤</div>
+          </div>
+        </nav>
+      `
+    },
+
+    // Post Creator
+    'post-creator': {
+      props:['modelValue'],
+      emits:['update:modelValue','post-created'],
+      data(){return{visibility:'Public'};},
+      template:`
+        <div class="bg-white shadow rounded p-4">
+          <textarea v-model="modelValue" placeholder="What's on your mind?" class="w-full border rounded p-2"></textarea>
+          <div class="flex justify-between items-center mt-2">
+            <div class="flex gap-2 items-center">
+              <button class="px-2 py-1 bg-gray-200 rounded">📷 Image</button>
+              <select v-model="visibility" class="border rounded px-2 py-1 text-sm">
+                <option>Public</option>
+                <option>Friends</option>
+                <option>Private</option>
+              </select>
+            </div>
+            <div class="flex gap-2 items-center">
+              <span class="text-gray-500 text-sm">{{ modelValue.length }}/280</span>
+              <button @click="$emit('post-created')" class="px-4 py-1 bg-blue-500 text-white rounded">Post</button>
+            </div>
+          </div>
+        </div>
+      `
+    },
+
+    // Story Circle
+    'story-circle': {
+      props:['user','hasUnseen'],
+      template:`
+        <div class="flex flex-col items-center cursor-pointer">
+          <div :class="['w-16 h-16 rounded-full border-4', hasUnseen?'border-blue-500':'border-gray-300'] bg-gray-300 mb-1"></div>
+          <span class="text-xs truncate w-16 text-center">{{ user.name }}</span>
+        </div>
+      `
+    },
+
+    // Stories Bar
+    'stories-bar': {
+      props:['users'],
+      template:`
+        <div class="flex overflow-x-auto gap-2 bg-white shadow rounded p-2">
+          <div class="flex flex-col items-center cursor-pointer">
+            <div class="w-16 h-16 rounded-full bg-gray-300 mb-1 flex items-center justify-center text-2xl">+</div>
+            <span class="text-xs">Add Story</span>
+          </div>
+          <story-circle v-for="u in users" :key="u.id" :user="u" :has-unseen="u.hasUnseen"></story-circle>
+        </div>
+      `
+    },
+
+    // Feed Post
+    'feed-post': {
+      props:['post'],
+      emits:['toggle-like'],
+      data(){return {expanded:false};},
+      template:`
+        <div class="bg-white shadow rounded p-4">
+          <div class="flex justify-between items-center mb-2">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 bg-gray-300 rounded-full"></div>
+              <div>
+                <p class="font-semibold">{{ post.user.name }}</p>
+                <p class="text-xs text-gray-500">Just now</p>
+              </div>
+            </div>
+            <div class="cursor-pointer">⋮</div>
+          </div>
+          <p>
+            <span v-if="expanded">{{ post.content }}</span>
+            <span v-else>{{ post.content.length>100? post.content.slice(0,100)+'...': post.content }}</span>
+            <button v-if="post.content.length>100" @click="expanded=!expanded" class="text-blue-500 text-sm ml-1">
+              {{ expanded?'Show Less':'Read More' }}
+            </button>
+          </p>
+          <img v-if="post.image" :src="post.image" class="w-full h-48 object-cover rounded my-2">
+          <div class="flex gap-4 mt-2 text-sm text-gray-600">
+            <button @click="$emit('toggle-like')">{{ post.liked?'❤️':'🤍' }} {{ post.likes }}</button>
+            <button>💬 {{ post.comments }}</button>
+            <button>🔁 Share</button>
+          </div>
+        </div>
+      `
+    },
+
+    // Suggested Users
+    'suggested-users': {
+      props:['users'],
+      template:`
+        <div class="bg-white shadow rounded p-4">
+          <h3 class="font-bold mb-2">Suggested Users</h3>
+          <div v-for="u in users" :key="u.id" class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 bg-gray-300 rounded-full"></div>
+              <div>
+                <p class="text-sm">{{ u.name }}</p>
+                <p class="text-xs text-gray-500">{{ u.mutual }} mutual friends</p>
+              </div>
+            </div>
+            <button class="px-2 py-1 bg-blue-500 text-white rounded text-xs">Follow</button>
+          </div>
+        </div>
+      `
+    },
+
+    // Friend Request
+    'friend-request': {
+      props:['request'],
+      emits:['accept','decline'],
+      template:`
+        <div class="bg-white shadow rounded p-4 flex justify-between items-center">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-gray-300 rounded-full"></div>
+            <div>
+              <p class="text-sm font-semibold">{{ request.name }}</p>
+              <p class="text-xs text-gray-500">{{ request.mutual }} mutual friends</p>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <button @click="$emit('accept')" class="px-2 py-1 bg-green-500 text-white rounded text-xs">Accept</button>
+            <button @click="$emit('decline')" class="px-2 py-1 bg-red-500 text-white rounded text-xs">Decline</button>
+          </div>
+        </div>
+      `
+    }
+
+  }
+}).mount('#app');
+</script>
+
+</body>
+</html>

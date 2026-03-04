@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Vue Todo App</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Asap&family=Lobster&display=swap" rel="stylesheet">
+  <style>
+    body {
+        font-family: "Asap", sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 p-6">
+
+<div id="app" class="max-w-2xl mx-auto">
+  <h1 class="text-3xl font-bold text-center mb-6">Vue Todo App</h1>
+
+  <div class="flex gap-2 mb-4">
+    <input type="text" v-model="newTask" placeholder="Task description" class="flex-1 border px-2 py-1 rounded" />
+    <select v-model="newPriority" class="border px-2 py-1 rounded">
+      <option value="High">High</option>
+      <option value="Medium">Medium</option>
+      <option value="Low">Low</option>
+    </select>
+    <input type="date" v-model="newDueDate" class="border px-2 py-1 rounded" />
+    <button @click="addTodo" class="bg-blue-600 text-white px-3 py-1 rounded">Add</button>
+  </div>
+
+  <div class="flex flex-wrap gap-2 mb-4">
+    <button @click="filter = 'all'" :class="buttonClass('all')">All</button>
+    <button @click="filter = 'active'" :class="buttonClass('active')">Active</button>
+    <button @click="filter = 'completed'" :class="buttonClass('completed')">Completed</button>
+    <button @click="filter = 'High'" :class="buttonClass('High')">High</button>
+    <button @click="filter = 'Medium'" :class="buttonClass('Medium')">Medium</button>
+    <button @click="filter = 'Low'" :class="buttonClass('Low')">Low</button>
+  </div>
+
+  <ul>
+    <li v-for="todo in filteredTodos" :key="todo.id" class="flex items-center justify-between bg-white p-3 rounded mb-2 shadow">
+      <div class="flex items-center gap-2">
+        <input type="checkbox" v-model="todo.completed" class="w-5 h-5">
+        <span v-if="!todo.editing"
+              :class="[textClass(todo), todo.completed ? 'line-through' : '']">
+          {{ todo.description }}
+        </span>
+        <input v-else type="text" v-model="todo.description"  class="border px-1 py-0.5 rounded w-full" />
+        <span v-if="todo.dueDate" class="text-gray-500 text-sm ml-2">
+          ({{ todo.dueDate }})
+        </span>
+      </div>
+
+      <div class="flex gap-1">
+        <button @click="deleteTodo(todo.id)" class="bg-red-500 text-white px-2 py-1 rounded">Delete</button>
+        <button v-if="!todo.editing" @click="editTodo(todo)" class="bg-blue-600 text-black px-2 py-1 rounded">Edit</button>
+        <button v-if="todo.editing" @click="stopEdit(todo)" class="bg-blue-600 text-black px-2 py-1 rounded">Save</button>
+      </div>
+    </li>
+  </ul>
+  <div class="mt-4">
+    <button @click="clearCompleted" class="bg-gray-700 text-white px-3 py-1 rounded">Clear All Completed</button>
+  </div>
+  <div class="mt-6 p-4 bg-white rounded shadow">
+    <p>Total Todos: {{ todos.length }}</p>
+    <p>Completed: {{ completedCount }}</p>
+    <p>Pending: {{ pendingCount }}</p>
+    <p>Completion: {{ completionPercentage }}%</p>
+  </div>
+</div>
+
+<script>
+const { createApp } = Vue
+
+createApp({
+  data() {
+    return {
+      newTask: '',
+      newPriority: 'Medium',
+      newDueDate: '',
+      filter: 'all',
+      todos: [],
+      nextId: 1
+    }
+  },
+  computed: {
+    filteredTodos() {
+      let list = this.todos
+      if (this.filter === 'active') {
+        list = list.filter(t => !t.completed)
+      } else if (this.filter === 'completed') {
+        list = list.filter(t => t.completed)
+      }
+      else if (['High','Medium','Low'].includes(this.filter)) {
+        list = list.filter(t => t.priority === this.filter)
+      }
+
+      return list
+    },
+    completedCount() {
+      return this.todos.filter(t => t.completed).length
+    },
+    pendingCount() {
+      return this.todos.filter(t => !t.completed).length
+    },
+    completionPercentage() {
+      if (this.todos.length === 0) return 0
+      return Math.round((this.completedCount / this.todos.length) * 100)
+    }
+  },
+  methods: {
+    addTodo() {
+      if (!this.newTask.trim()) return
+      this.todos.push({
+        id: this.nextId++,
+        description: this.newTask,
+        priority: this.newPriority,
+        dueDate: this.newDueDate || null,
+        completed: false,
+        editing: false
+      })
+      this.newTask = ''
+      this.newDueDate = ''
+      this.newPriority = 'Medium'
+    },
+    deleteTodo(id) {
+      this.todos = this.todos.filter(t => t.id !== id)
+    },
+    editTodo(todo) {
+      todo.editing = true
+    },
+    stopEdit(todo) {
+      todo.editing = false
+    },
+    clearCompleted() {
+      this.todos = this.todos.filter(t => !t.completed)
+    },
+    textClass(todo) {
+      if (todo.priority === 'High') return 'text-red-600 font-bold'
+      if (todo.priority === 'Medium') return 'text-yellow-600 font-medium'
+      if (todo.priority === 'Low') return 'text-green-600'
+      return ''
+    },
+    buttonClass(value) {
+      return [
+        'px-3 py-1 rounded',
+        this.filter === value ? 'bg-blue-600 text-white' : 'bg-gray-200 text-black'
+      ]
+    }
+  }
+}).mount('#app')
+</script>
+
+</body>
+</html>

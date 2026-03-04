@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Vue Multi-Step Survey</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 p-6">
+<div id="app" class="max-w-3xl mx-auto bg-white p-8 rounded shadow">
+
+  <h1 class="text-3xl font-bold mb-4">User Survey</h1>
+
+  <!-- Progress -->
+  <div class="w-full bg-gray-200 rounded-full h-3 mb-6">
+    <div class="bg-blue-500 h-3 rounded-full transition-all"
+         :style="{ width: progress + '%' }"></div>
+  </div>
+
+  <!-- STEP 1 -->
+  <div v-if="step === 1" class="space-y-4">
+    <h2 class="text-xl font-semibold">Step 1: Personal Info</h2>
+
+    <input v-model.trim="form.name"
+           placeholder="Name"
+           class="w-full border px-3 py-2 rounded">
+
+    <input v-model.trim="form.email"
+           placeholder="Email"
+           class="w-full border px-3 py-2 rounded">
+
+    <input v-model.number="form.age"
+           type="number"
+           placeholder="Age"
+           class="w-full border px-3 py-2 rounded">
+
+    <p v-if="error" class="text-red-500 text-sm">{{ error }}</p>
+  </div>
+
+  <!-- STEP 2 -->
+  <div v-if="step === 2" class="space-y-4">
+    <h2 class="text-xl font-semibold">Step 2: Work Info</h2>
+
+    <input v-model.number="form.experience"
+           type="number"
+           placeholder="Years of Experience"
+           class="w-full border px-3 py-2 rounded">
+
+    <select v-model="form.role" class="w-full border px-3 py-2 rounded">
+      <option disabled value="">Job Role</option>
+      <option>Developer</option>
+      <option>Designer</option>
+      <option>Manager</option>
+      <option>Student</option>
+    </select>
+
+    <select v-model="form.industry" class="w-full border px-3 py-2 rounded">
+      <option disabled value="">Industry</option>
+      <option>Technology</option>
+      <option>Finance</option>
+      <option>Healthcare</option>
+      <option>Education</option>
+    </select>
+
+    <p v-if="error" class="text-red-500 text-sm">{{ error }}</p>
+  </div>
+
+  <!-- STEP 3 -->
+  <div v-if="step === 3" class="space-y-4">
+    <h2 class="text-xl font-semibold">Step 3: Feedback</h2>
+
+    <!-- Satisfaction -->
+    <div>
+      <p class="font-semibold mb-1">Satisfaction</p>
+      <label v-for="n in 5" :key="n" class="mr-3">
+        <input type="radio" v-model.number="form.satisfaction" :value="n">
+        {{ n }}
+      </label>
+    </div>
+
+    <!-- Features -->
+    <div>
+      <p class="font-semibold mb-1">Features you like</p>
+      <label v-for="f in features" :key="f" class="block">
+        <input type="checkbox" v-model="form.features" :value="f"> {{ f }}
+      </label>
+    </div>
+
+    <!-- Budget -->
+    <div>
+      <p class="font-semibold">Budget: ${{ form.budget }}</p>
+      <input type="range"
+             min="100"
+             max="5000"
+             step="100"
+             v-model.number="form.budget"
+             class="w-full">
+    </div>
+
+    <!-- Rating -->
+    <div>
+      <p class="font-semibold mb-1">Overall Rating</p>
+      <span v-for="n in 5" :key="n"
+            class="cursor-pointer text-2xl"
+            @click="form.rating = n">
+        {{ n <= form.rating ? '⭐' : '☆' }}
+      </span>
+    </div>
+
+    <p v-if="error" class="text-red-500 text-sm">{{ error }}</p>
+  </div>
+
+  <!-- STEP 4 -->
+  <div v-if="step === 4" class="space-y-4">
+    <h2 class="text-xl font-semibold">Step 4: Comments</h2>
+
+    <textarea v-model.lazy="form.comments"
+              placeholder="Suggestions or comments"
+              class="w-full border px-3 py-2 rounded h-24"></textarea>
+
+    <label>
+      <input type="checkbox" v-model="form.newsletter">
+      Subscribe to newsletter
+    </label>
+  </div>
+
+  <!-- SUMMARY -->
+  <div v-if="step === 5">
+    <h2 class="text-xl font-semibold mb-4">Summary</h2>
+    <pre class="bg-gray-100 p-4 rounded text-sm">{{ form }}</pre>
+  </div>
+
+  <!-- THANK YOU -->
+  <div v-if="step === 6" class="text-center">
+    <h2 class="text-2xl font-bold text-green-600">Thank you! 🎉</h2>
+    <p class="mt-2">Your survey has been submitted.</p>
+  </div>
+
+  <!-- Navigation -->
+  <div v-if="step < 6" class="flex justify-between mt-6">
+    <button @click="prev"
+            :disabled="step === 1"
+            class="px-4 py-2 bg-gray-300 rounded disabled:opacity-50">
+      Previous
+    </button>
+
+    <button v-if="step < 5"
+            @click="next"
+            class="px-4 py-2 bg-blue-500 text-white rounded">
+      Next
+    </button>
+
+    <button v-if="step === 5"
+            @click="submit"
+            class="px-4 py-2 bg-green-500 text-white rounded">
+      Submit
+    </button>
+  </div>
+
+</div>
+
+<script>
+const { createApp } = Vue;
+
+createApp({
+  data() {
+    return {
+      step: 1,
+      error: '',
+      features: ['Speed','Design','Support','Price','Security','Ease of Use'],
+      form: {
+        name: '',
+        email: '',
+        age: null,
+        experience: null,
+        role: '',
+        industry: '',
+        satisfaction: null,
+        features: [],
+        budget: 1000,
+        rating: 0,
+        comments: '',
+        newsletter: false
+      }
+    }
+  },
+  computed: {
+    progress() {
+      return (this.step - 1) * 20;
+    }
+  },
+  methods: {
+    validateStep() {
+      this.error = '';
+      if (this.step === 1 && (!this.form.name || !this.form.email || !this.form.age))
+        this.error = 'All fields are required';
+      if (this.step === 2 && (!this.form.experience || !this.form.role || !this.form.industry))
+        this.error = 'Please complete this step';
+      if (this.step === 3 && (!this.form.satisfaction || this.form.rating === 0))
+        this.error = 'Please provide ratings';
+      return !this.error;
+    },
+    next() {
+      if (this.validateStep()) this.step++;
+    },
+    prev() {
+      this.step--;
+    },
+    submit() {
+      this.step = 6;
+    }
+  }
+}).mount('#app');
+</script>
+
+</body>
+</html>

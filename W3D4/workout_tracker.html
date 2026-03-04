@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Workout Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Vue 3 -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6">
+<div id="app" class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+  <!-- Add Workout Form -->
+  <div class="bg-white p-4 rounded shadow">
+    <h2 class="text-xl font-bold mb-3">Log Workout</h2>
+    <input type="date" v-model="newWorkout.date" class="border p-2 w-full mb-2">
+    <select v-model="newWorkout.type" class="border p-2 w-full mb-2">
+      <option disabled value="">Select Type</option>
+      <option>Running</option>
+      <option>Cycling</option>
+      <option>Swimming</option>
+      <option>Gym</option>
+      <option>Yoga</option>
+      <option>Walking</option>
+    </select>
+    <input type="number" v-model.number="newWorkout.duration" placeholder="Duration (min)" class="border p-2 w-full mb-2">
+    <input type="number" v-model.number="newWorkout.distance" placeholder="Distance (km)" class="border p-2 w-full mb-2">
+    <input type="number" v-model.number="newWorkout.calories" placeholder="Calories Burned" class="border p-2 w-full mb-2">
+    <input v-model="newWorkout.notes" placeholder="Notes" class="border p-2 w-full mb-2">
+    <button @click="addWorkout(newWorkout)" class="bg-blue-500 text-white px-4 py-2 rounded w-full">Add Workout</button>
+  </div>
+
+  <!-- Workout Stats Dashboard -->
+  <div class="bg-white p-4 rounded shadow lg:col-span-2">
+    <h2 class="text-xl font-bold mb-3">Workout Statistics</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+      <div class="bg-green-50 p-3 rounded text-center">
+        <p>Total Workouts</p>
+        <strong>{{ totalWorkouts }}</strong>
+      </div>
+      <div class="bg-blue-50 p-3 rounded text-center">
+        <p>Total Duration</p>
+        <strong>{{ totalDuration }} min</strong>
+      </div>
+      <div class="bg-red-50 p-3 rounded text-center">
+        <p>Total Calories</p>
+        <strong>{{ totalCalories }}</strong>
+      </div>
+      <div class="bg-yellow-50 p-3 rounded text-center">
+        <p>Total Distance</p>
+        <strong>{{ totalDistance }} km</strong>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 mb-4">
+      <div class="bg-purple-50 p-3 rounded text-center">
+        <p>Average Duration</p>
+        <strong>{{ averageDuration.toFixed(1) }} min</strong>
+      </div>
+      <div class="bg-pink-50 p-3 rounded text-center">
+        <p>Average Calories/Workout</p>
+        <strong>{{ averageCaloriesPerWorkout.toFixed(1) }}</strong>
+      </div>
+    </div>
+
+    <div class="mb-4">
+      <p>Longest Workout: {{ longestWorkout?.type || '-' }} ({{ longestWorkout?.duration || 0 }} min)</p>
+      <p>Most Calories Burned: {{ mostCaloriesBurned?.type || '-' }} ({{ mostCaloriesBurned?.calories || 0 }})</p>
+      <p>Average Pace (Running): {{ averagePace.toFixed(2) || 0 }} min/km</p>
+      <p>Fitness Level: {{ fitnessLevel }}</p>
+    </div>
+
+    <h3 class="font-bold mt-4 mb-2">Recent Workouts</h3>
+    <ul class="list-disc ml-6">
+      <li v-for="w in recentWorkouts" :key="w.id">
+        {{ w.date }} – {{ w.type }} – {{ w.duration }} min – {{ w.calories }} cal
+        <button @click="deleteWorkout(w.id)" class="text-red-500 ml-2 text-sm">Delete</button>
+      </li>
+    </ul>
+  </div>
+
+</div>
+
+<script>
+const { createApp } = Vue;
+
+createApp({
+  data() {
+    return {
+      workouts: JSON.parse(localStorage.getItem('workouts')) || [],
+      newWorkout: {
+        id: null,
+        date: '',
+        type: '',
+        duration: 0,
+        distance: 0,
+        calories: 0,
+        notes: ''
+      }
+    };
+  },
+
+  computed: {
+    totalWorkouts() {
+      return this.workouts.length;
+    },
+    totalDuration() {
+      return this.workouts.reduce((sum, w) => sum + w.duration, 0);
+    },
+    totalCalories() {
+      return this.workouts.reduce((sum, w) => sum + w.calories, 0);
+    },
+    totalDistance() {
+      return this.workouts.reduce((sum, w) => sum + (w.distance || 0), 0);
+    },
+    averageDuration() {
+      return this.totalWorkouts ? this.totalDuration / this.totalWorkouts : 0;
+    },
+    averageCaloriesPerWorkout() {
+      return this.totalWorkouts ? this.totalCalories / this.totalWorkouts : 0;
+    },
+    averagePace() {
+      const runs = this.workouts.filter(w => w.type === 'Running' && w.distance > 0);
+      if (!runs.length) return 0;
+      const totalMinutes = runs.reduce((sum, w) => sum + w.duration, 0);
+      const totalKm = runs.reduce((sum, w) => sum + w.distance, 0);
+      return totalMinutes / totalKm;
+    },
+    workoutsByType() {
+      return this.workouts.reduce((acc, w) => {
+        acc[w.type] = acc[w.type] ? [...acc[w.type], w] : [w];
+        return acc;
+      }, {});
+    },
+    workoutsThisWeek() {
+      const now = new Date();
+      const weekStart = new Date(now.setDate(now.getDate() - now.getDay()));
+      return this.workouts.filter(w => new Date(w.date) >= weekStart);
+    },
+    workoutsThisMonth() {
+      const now = new Date();
+      return this.workouts.filter(w => {
+        const d = new Date(w.date);
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      });
+    },
+    longestWorkout() {
+      return this.workouts.reduce((max, w) => w.duration > (max?.duration || 0) ? w : max, null);
+    },
+    mostCaloriesBurned() {
+      return this.workouts.reduce((max, w) => w.calories > (max?.calories || 0) ? w : max, null);
+    },
+    consistencyScore() {
+      return this.workoutsThisWeek.length;
+    },
+    fitnessLevel() {
+      if (this.totalWorkouts >= 20) return 'Excellent';
+      if (this.totalWorkouts >= 10) return 'Good';
+      if (this.totalWorkouts >= 5) return 'Average';
+      return 'Beginner';
+    },
+    recentWorkouts() {
+      return [...this.workouts].slice(-5).reverse();
+    }
+  },
+
+  methods: {
+    addWorkout(w) {
+      if (!w.date || !w.type || !w.duration) return;
+      w.id = Date.now();
+      this.workouts.push({ ...w });
+      this.newWorkout = { id:null, date:'', type:'', duration:0, distance:0, calories:0, notes:'' };
+    },
+    editWorkout(id, updates) {
+      const w = this.workouts.find(w => w.id === id);
+      if (w) Object.assign(w, updates);
+    },
+    deleteWorkout(id) {
+      this.workouts = this.workouts.filter(w => w.id !== id);
+    },
+    filterByType(type) {
+      return this.workouts.filter(w => w.type === type);
+    },
+    filterByDateRange(start, end) {
+      return this.workouts.filter(w => w.date >= start && w.date <= end);
+    },
+    calculatePace(distance, duration) {
+      return distance ? duration / distance : 0;
+    },
+    calculateCalories(type, duration) {
+      const map = { Running:10, Cycling:8, Swimming:12, Gym:7, Yoga:4, Walking:5 };
+      return map[type] ? map[type]*duration : duration*6;
+    },
+    setGoal(type, value) {
+      // placeholder for goal logic
+      console.log('Set goal', type, value);
+    },
+    exportData() {
+      const data = JSON.stringify(this.workouts, null, 2);
+      alert(data);
+    }
+  },
+
+  watch: {
+    workouts: {
+      deep: true,
+      handler(v) {
+        localStorage.setItem('workouts', JSON.stringify(v));
+      }
+    },
+    totalCalories(val) {
+      if (val > 5000) alert('🎉 Calories burned milestone reached!');
+    }
+  }
+}).mount('#app');
+</script>
+</body>
+</html>

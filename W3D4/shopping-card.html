@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vue Shopping Cart</title>
+
+  <!-- Vue 3 -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100">
+<div id="app" class="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+  <!-- PRODUCTS -->
+  <div class="lg:col-span-2">
+    <h1 class="text-3xl font-bold mb-4">Products</h1>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+      <div
+        v-for="product in products"
+        :key="product.id"
+        class="bg-white p-4 rounded shadow"
+      >
+        <h2 class="font-bold text-lg">{{ product.name }}</h2>
+        <p class="text-gray-600">$ {{ product.price }}</p>
+        <p
+          class="text-sm"
+          :class="product.stock < 5 ? 'text-red-500' : 'text-gray-500'"
+        >
+          Stock: {{ product.stock }}
+        </p>
+
+        <button
+          class="mt-3 w-full py-2 rounded text-white"
+          :class="product.stock === 0 ? 'bg-gray-400' : 'bg-blue-500 hover:bg-blue-600'"
+          :disabled="product.stock === 0"
+          @click="addToCart(product)"
+        >
+          Add to Cart
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CART -->
+  <div class="bg-white p-4 rounded shadow">
+    <h2 class="text-2xl font-bold mb-4">Cart</h2>
+
+    <p v-if="cartItems.length === 0" class="text-gray-500">Cart is empty</p>
+
+    <div
+      v-for="item in cartItems"
+      :key="item.id"
+      class="border-b py-3"
+    >
+      <div class="flex justify-between items-center">
+        <div>
+          <p class="font-semibold">{{ item.name }}</p>
+          <p class="text-sm text-gray-500">$ {{ item.price }}</p>
+        </div>
+        <button
+          class="text-red-500 text-sm"
+          @click="removeFromCart(item.id)"
+        >
+          Remove
+        </button>
+      </div>
+
+      <div class="flex items-center gap-2 mt-2">
+        <input
+          type="number"
+          class="border w-16 p-1"
+          min="1"
+          :max="item.stock"
+          v-model.number="item.quantity"
+          @change="updateQuantity(item.id, item.quantity)"
+        />
+        <p class="text-sm">
+          Line Total: <strong>$ {{ item.price * item.quantity }}</strong>
+        </p>
+      </div>
+    </div>
+
+    <!-- SUMMARY -->
+    <div v-if="cartItems.length" class="mt-4 text-sm space-y-1">
+      <p>Items: {{ itemCount }}</p>
+      <p>Subtotal: $ {{ subtotal.toFixed(2) }}</p>
+      <p>Tax (10%): $ {{ tax.toFixed(2) }}</p>
+      <p>Shipping: $ {{ shipping.toFixed(2) }}</p>
+      <p>Discount: -$ {{ discount.toFixed(2) }}</p>
+
+      <hr class="my-2" />
+
+      <p class="font-bold text-lg">Grand Total: $ {{ grandTotal.toFixed(2) }}</p>
+
+      <p>Average Item Price: $ {{ averageItemPrice.toFixed(2) }}</p>
+      <p>Most Expensive Item: {{ mostExpensiveItem?.name || '-' }}</p>
+      <p>Cart Value: <strong>{{ cartValue }}</strong></p>
+
+      <div class="flex gap-2 mt-3">
+        <button
+          class="bg-red-500 text-white px-3 py-1 rounded"
+          @click="clearCart"
+        >
+          Clear
+        </button>
+        <button
+          class="bg-green-500 text-white px-3 py-1 rounded"
+          @click="checkout"
+        >
+          Checkout
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const { createApp } = Vue;
+
+createApp({
+  data() {
+    return {
+      products: [
+        { id: 1, name: 'Laptop', price: 999, stock: 5 },
+        { id: 2, name: 'Mouse', price: 29, stock: 20 },
+        { id: 3, name: 'Keyboard', price: 79, stock: 8 },
+        { id: 4, name: 'Monitor', price: 249, stock: 4 },
+        { id: 5, name: 'Headphones', price: 149, stock: 10 },
+        { id: 6, name: 'Webcam', price: 89, stock: 6 },
+        { id: 7, name: 'USB Hub', price: 39, stock: 15 },
+        { id: 8, name: 'Chair', price: 199, stock: 3 }
+      ],
+      cart: JSON.parse(localStorage.getItem('cart')) || []
+    };
+  },
+
+  computed: {
+    cartItems() {
+      return this.cart;
+    },
+    itemCount() {
+      return this.cart.reduce((sum, i) => sum + i.quantity, 0);
+    },
+    subtotal() {
+      return this.cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    },
+    tax() {
+      return this.subtotal * 0.1;
+    },
+    shipping() {
+      return this.subtotal > 100 ? 0 : this.cart.length ? 10 : 0;
+    },
+    discount() {
+      if (this.subtotal > 500) return this.subtotal * 0.1;
+      if (this.subtotal > 200) return this.subtotal * 0.05;
+      return 0;
+    },
+    grandTotal() {
+      return this.subtotal + this.tax + this.shipping - this.discount;
+    },
+    averageItemPrice() {
+      return this.itemCount ? this.subtotal / this.itemCount : 0;
+    },
+    mostExpensiveItem() {
+      return this.cart.reduce((max, i) => i.price > (max?.price || 0) ? i : max, null);
+    },
+    cartValue() {
+      if (this.grandTotal < 100) return 'Low';
+      if (this.grandTotal <= 300) return 'Medium';
+      return 'High';
+    }
+  },
+
+  methods: {
+    addToCart(product) {
+      const item = this.cart.find(i => i.id === product.id);
+      if (item) {
+        if (item.quantity < product.stock) item.quantity++;
+      } else {
+        this.cart.push({ ...product, quantity: 1 });
+      }
+    },
+    removeFromCart(id) {
+      this.cart = this.cart.filter(i => i.id !== id);
+    },
+    updateQuantity(id, qty) {
+      const item = this.cart.find(i => i.id === id);
+      if (item) item.quantity = Math.max(1, Math.min(qty, item.stock));
+    },
+    clearCart() {
+      this.cart = [];
+    },
+    checkout() {
+      alert(`Order placed! Total: $${this.grandTotal.toFixed(2)}`);
+      this.clearCart();
+    }
+  },
+
+  watch: {
+    cart: {
+      deep: true,
+      handler(newCart) {
+        localStorage.setItem('cart', JSON.stringify(newCart));
+      }
+    }
+  }
+}).mount('#app');
+</script>
+</body>
+</html>

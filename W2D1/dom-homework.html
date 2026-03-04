@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>DOM Practice with Tailwind</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 text-gray-800 min-h-screen">
+  <div class="max-w-5xl mx-auto p-6 space-y-10">
+    <h1 class="text-4xl font-bold text-center text-blue-700">
+      DOM Traversal Practice
+    </h1>
+
+    <nav class="bg-white p-6 rounded-xl shadow">
+      <h2 class="text-xl font-semibold mb-4">Navigation Menu</h2>
+
+      <ul id="main-menu" class="list-disc pl-6 space-y-2">
+        <li class="font-medium">Home</li>
+
+        <li class="font-medium">
+          Services
+          <ul class="list-circle pl-6 mt-2 space-y-2 text-gray-700">
+            <li>
+              Web Development
+              <ul class="list-square pl-6 mt-2 space-y-1 text-gray-600">
+                <li id="deepest-item" class= "font-semibold">
+                  Frontend
+                </li>
+                <li>Backend</li>
+              </ul>
+            </li>
+            <li>Mobile Apps</li>
+          </ul>
+        </li>
+
+        <li class="font-medium">Contact</li>
+      </ul>
+    </nav>
+
+    <section id="about" class="bg-white p-6 rounded-xl shadow space-y-4">
+      <h2 class="text-2xl font-bold  highlight">
+        About Us
+      </h2>
+
+      <p class="text-gray-700">
+        We build modern web applications.
+      </p>
+
+      <p class="important  font-semibold">
+        Quality and performance are our priorities.
+      </p>
+
+      <ul class="list-disc pl-6 space-y-1">
+        <li class="feature  px-2 py-1 rounded">Fast</li>
+        <li>Reliable</li>
+        <li class="feature  px-2 py-1 rounded">Secure</li>
+      </ul>
+    </section>
+
+    <section id="services" class="bg-white p-6 rounded-xl shadow space-y-4">
+      <h2 class="text-2xl font-bold ">
+        Our Services
+      </h2>
+
+      <p class="highlight  p-2 rounded">
+        We offer professional solutions.
+      </p>
+
+      <p>
+        Our team specializes in full-stack development.
+      </p>
+
+      <ul class="list-disc pl-6 space-y-1">
+        <li>Web Design</li>
+        <li class="important font-semibold">
+          Web Development
+        </li>
+        <li>SEO</li>
+      </ul>
+    </section>
+
+    <section id="contact" class="bg-white p-6 rounded-xl shadow space-y-4">
+      <h3 class="text-xl font-bold">
+        Contact Us
+      </h3>
+
+      <p>Email us anytime.</p>
+
+      <p class="highlight p-2 rounded">
+        Support is available 24/7.
+      </p>
+
+      <ul class="list-disc pl-6 space-y-1">
+        <li>Email</li>
+        <li>Phone</li>
+      </ul>
+    </section>
+
+  </div>
+
+  <script>
+    const headings = document.querySelectorAll("h1, h2, h3");
+    headings.forEach(h => console.log("Heading:", h.textContent));
+
+    const highlights = document.querySelectorAll(".highlight");
+    console.log("Total .highlight elements:", highlights.length);
+
+    let current = document.getElementById("deepest-item");
+    console.log("Traversing from deepest element:");
+    while (current) {
+      console.log(current.tagName);
+      if (current === document.body) break;
+      current = current.parentElement;
+    }
+    document.querySelectorAll("li").forEach(item => {
+      let depth = 0;
+      let parent = item.parentElement;
+
+      while (parent && parent.tagName !== "BODY") {
+        if (parent.tagName === "UL") depth++;
+        parent = parent.parentElement;
+      }
+
+      console.log(`Item: ${item.textContent.trim()} - Level: ${depth}`);
+    });
+
+    document.querySelectorAll("#services p").forEach(p => {
+      console.log("Service paragraph:", p.textContent);
+    });
+
+    Array.from(document.getElementById("about").children).forEach(child => {
+      console.log(child.tagName, child.textContent.trim());
+    });
+  </script>
+
+</body>
+</html>

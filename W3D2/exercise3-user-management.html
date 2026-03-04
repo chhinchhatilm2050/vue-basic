@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>User Management</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Asap&family=Lobster&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: "Asap", sans-serif;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-100 p-6">
+
+<div id="app" class="max-w-7xl mx-auto">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold">User Management</h1>
+    <button @click="openAdd"
+      class="bg-blue-600 text-white px-4 py-2 rounded">
+      + Add User
+    </button>
+  </div>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div class="p-4 rounded shadow bg-blue-300">
+      <p class="font-semibold">Total Users</p>
+      <p class="text-2xl">{{ users.length }}</p>
+    </div>
+    <div class="p-4 rounded shadow bg-blue-500">
+      <p>Admins</p>
+      <p class="text-xl">{{ countByRole('Admin') }}</p>
+    </div>
+    <div class="bg-blue-700 p-4 rounded shadow text-white">
+      <p>Active</p>
+      <p class="text-xl">{{ countByStatus('Active') }}</p>
+    </div>
+    <div class="bg-red-500 p-4 rounded shadow text-white">
+      <p>Suspended</p>
+      <p class="text-xl">{{ countByStatus('Suspended') }}</p>
+    </div>
+  </div>
+
+  <div class="flex flex-wrap gap-4 mb-6">
+    <input v-model="search"
+      placeholder="Search name or email"
+      class="border p-2 rounded w-full md:w-64"/>
+
+    <select v-model="filterRole" class="border p-2 rounded">
+      <option value="">All Roles</option>
+      <option>Admin</option>
+      <option>User</option>
+      <option>Guest</option>
+    </select>
+
+    <select v-model="filterStatus" class="border p-2 rounded">
+      <option value="">All Status</option>
+      <option>Active</option>
+      <option>Inactive</option>
+      <option>Suspended</option>
+    </select>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    <div v-for="user in filteredUsers" :key="user.id"
+      class="bg-white rounded-xl shadow p-4">
+
+      <img :src="user.avatar"
+        class="w-20 h-20 rounded-full mx-auto mb-3"/>
+
+      <h3 class="text-center font-semibold">{{ user.name }}</h3>
+      <p class="text-center text-sm text-gray-500">{{ user.email }}</p>
+
+      <div class="mt-3 text-sm">
+        <p><b>Role:</b>
+          <select v-model="user.role" class="border rounded px-1">
+            <option>Admin</option>
+            <option>User</option>
+            <option>Guest</option>
+          </select>
+        </p>
+
+        <p class="mt-3"><b>Status:</b>
+          <select v-model="user.status" class="border rounded px-1">
+            <option>Active</option>
+            <option>Inactive</option>
+            <option>Suspended</option>
+          </select>
+        </p>
+
+        <p class="mt-3"><b>Joined:</b> {{ user.joinDate }}</p>
+      </div>
+
+      <div class="flex justify-between mt-4">
+        <button @click="openEdit(user)"
+          class="text-white bg-blue-700 py-1 px-3 rounded-lg">
+          Edit
+        </button>
+
+        <button @click="openDelete(user)"
+          class="text-white bg-red-600 rounded-xl py-1 px-3">
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+  <div v-if="showModal"
+    class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+    <div class="bg-white p-6 rounded w-96">
+
+      <h2 class="text-xl font-bold mb-4">
+        {{ isEdit ? 'Edit User' : 'Add User' }}
+      </h2>
+
+      <input v-model="form.avatar" placeholder="Image URL"
+        class="border p-2 w-full mb-2">
+
+      <input v-model="form.name" placeholder="Name"
+        class="border p-2 w-full mb-2"/>
+
+      <input v-model="form.email" placeholder="Email"
+        class="border p-2 w-full mb-2"/>
+
+      <select v-model="form.role" class="border p-2 w-full mb-2">
+        <option>Admin</option>
+        <option>User</option>
+        <option>Guest</option>
+      </select>
+
+      <select v-model="form.status" class="border p-2 w-full mb-2">
+        <option>Active</option>
+        <option>Inactive</option>
+        <option>Suspended</option>
+      </select>
+
+      <div class="flex justify-end gap-2">
+        <button @click="closeModal">Cancel</button>
+        <button @click="saveUser"
+          class="bg-blue-600 text-white px-4 py-1 rounded">
+          Save
+        </button>
+      </div>
+    </div>
+  </div>
+  <div v-if="showDelete"
+    class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+    <div class="bg-white p-6 rounded w-96">
+
+      <p class="mb-2 font-semibold">
+        Do you want to delete <span class="text-red-500">{{deleteUserName}}</span>
+      </p>
+
+      <input
+        v-model="confirmDeleteText"
+        type="text"
+        class="border p-2 w-full mb-4"
+        placeholder="Type user name"
+      >
+
+      <div class="flex justify-between">
+        <button @click="cancelDelete"
+          class="bg-blue-500 text-white py-1 px-3 rounded">
+          Cancel
+        </button>
+
+        <button
+          @click="deleteUser"
+          :disabled="confirmDeleteText !== deleteUserName"
+          :class="confirmDeleteText === deleteUserName
+            ? 'bg-red-600'
+            : 'bg-red-300 cursor-not-allowed'"
+          class="text-white py-1 px-3 rounded">
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const { createApp } = Vue
+
+createApp({
+  data() {
+    return {
+      search: '',
+      filterRole: '',
+      filterStatus: '',
+
+      showModal: false,
+      isEdit: false,
+      editId: null,
+
+      showDelete: false,
+      deleteId: null,
+      deleteUserName: '',
+      confirmDeleteText: '',
+
+      form: {
+        avatar: '',
+        name: '',
+        email: '',
+        role: 'User',
+        status: 'Active'
+      },
+
+      users: [
+        {
+          id: 1,
+          name: 'Nana',
+          email: 'nana@example.com',
+          avatar: 'https://i.pinimg.com/1200x/7e/0c/0a/7e0c0a7dd6a5e8dbe8b9debb31f5ba63.jpg',
+          role: 'Admin',
+          status: 'Active',
+          joinDate: '2024-01-15'
+        },
+        {
+          id: 2,
+          name: 'Ling',
+          email: 'ling@example.com',
+          avatar: 'https://i.pinimg.com/1200x/d7/3e/02/d73e0268e327e236ffac7be80b6068ca.jpg',
+          role: 'User',
+          status: 'Inactive',
+          joinDate: '2024-02-01'
+        }
+      ]
+    }
+  },
+
+  computed: {
+    filteredUsers() {
+      return this.users.filter(u => {
+        return (
+          (u.name.toLowerCase().includes(this.search.toLowerCase()) ||
+           u.email.toLowerCase().includes(this.search.toLowerCase())) &&
+          (this.filterRole ? u.role === this.filterRole : true) &&
+          (this.filterStatus ? u.status === this.filterStatus : true)
+        )
+      })
+    }
+  },
+
+  methods: {
+    countByRole(role) {
+      return this.users.filter(u => u.role === role).length
+    },
+    countByStatus(status) {
+      return this.users.filter(u => u.status === status).length
+    },
+
+    openAdd() {
+      this.isEdit = false
+      this.form = { avatar:'', name:'', email:'', role:'User', status:'Active' }
+      this.showModal = true
+    },
+
+    openEdit(user) {
+      this.isEdit = true
+      this.editId = user.id
+      this.form = { ...user }
+      this.showModal = true
+    },
+
+    saveUser() {
+      if (this.isEdit) {
+        const index = this.users.findIndex(u => u.id === this.editId)
+        this.users[index] = { ...this.form }
+      } else {
+        this.users.push({
+          ...this.form,
+          id: Date.now(),
+          joinDate: new Date().toISOString().slice(0,10)
+        })
+      }
+      this.closeModal()
+    },
+
+    openDelete(user) {
+      this.deleteId = user.id
+      this.deleteUserName = user.name
+      this.confirmDeleteText = ''
+      this.showDelete = true
+    },
+
+    deleteUser() {
+      this.users = this.users.filter(u => u.id !== this.deleteId)
+      this.cancelDelete()
+    },
+
+    cancelDelete() {
+      this.showDelete = false
+      this.deleteId = null
+      this.deleteUserName = ''
+      this.confirmDeleteText = ''
+    },
+
+    closeModal() {
+      this.showModal = false
+    }
+  }
+}).mount('#app')
+</script>
+
+</body>
+</html>

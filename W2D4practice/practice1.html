@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <title>Todo App</title>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
+
+  <div class="bg-white w-full max-w-md p-6 rounded-2xl shadow-xl">
+    <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">
+       My Todo List
+    </h1>
+
+    <form id="todo-form" class="flex gap-2 mb-4">
+      <input
+        type="text"
+        id="todo-input"
+        placeholder="Enter a task"
+        class="flex-1 px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
+      <button
+        type="submit"
+        class="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition"
+      >
+        Add
+      </button>
+    </form>
+    <ul id="todo-list" class="space-y-2 mb-4">
+    </ul>
+    <button
+      id="clear-all"
+      class="w-full py-2 bg-red-500 text-white rounded-xl hover:bg-red-600 transition"
+    >
+      Clear All
+    </button>
+
+  </div>
+  <script>
+  const form = document.getElementById('todo-form');
+  const input = document.getElementById('todo-input');
+  const list = document.getElementById('todo-list');
+  const clearAllBtn = document.getElementById('clear-all');
+
+  let todos = [
+    { id: 1, text: 'Buy milk', completed: true },
+    { id: 2, text: 'Walk dog', completed: true }
+  ];
+
+  if (localStorage.getItem('todos')) {
+      todos = JSON.parse(localStorage.getItem('todos'));
+    } else {
+      localStorage.setItem('todos', JSON.stringify(todos));
+    }
+
+  function saveTodos(todosArray) {
+    localStorage.setItem('todos', JSON.stringify(todosArray));
+  }
+
+  function addTodo(text) {
+    const newTodo = {
+      id: Date.now(),
+      text,
+      completed: false
+    };
+    todos.push(newTodo);
+    saveTodos(todos);
+    renderTodos();
+  }
+
+  function deleteTodo(id) {
+    todos = todos.filter(todo => todo.id !== id);
+    saveTodos(todos);
+    renderTodos();
+  }
+
+
+  function toggleTodo(id) {
+    todos = todos.map(todo => {
+      if (todo.id === id) todo.completed = !todo.completed;
+      return todo;
+    });
+    saveTodos(todos);
+    renderTodos();
+  }
+
+  function renderTodos() {
+    list.innerHTML = '';
+    todos.forEach(todo => {
+      const li = document.createElement('li');
+      li.className = 'flex items-center justify-between bg-gray-100 px-4 py-2 rounded-xl';
+
+      li.innerHTML = `
+        <div class="flex items-center gap-2">
+          <input type="checkbox" ${todo.completed ? 'checked' : ''} class="w-4 h-4">
+          <span class="${todo.completed ? 'line-through text-gray-400' : ''}">${todo.text}</span>
+        </div>
+        <button class="text-red-500 hover:text-red-700 font-bold">✕</button>
+      `;
+
+      li.querySelector('input').addEventListener('change', () => toggleTodo(todo.id));
+
+      li.querySelector('button').addEventListener('click', () => deleteTodo(todo.id));
+
+      list.appendChild(li);
+    });
+  }
+
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const text = input.value.trim();
+    if (!text) {
+        const error = document.createElement('div');
+        const br = document.createElement('br');
+        error.textContent = 'Please input text';
+        error.classList.add('text-red-600', 'mt-2', 'text-sm');
+        form.appendChild(br);
+        form.appendChild(error);
+    return;
+    };
+    addTodo(text);
+    input.value = '';
+  });
+
+  clearAllBtn.addEventListener('click', () => {
+    todos = [];
+    saveTodos(todos);
+    renderTodos();
+  });
+  renderTodos();
+</script>
+
+
+</body>
+</html>

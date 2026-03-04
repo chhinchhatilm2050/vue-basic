@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Booking Form</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Asap&family=Lobster&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: "Asap", sans-serif;
+    }
+    .input {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #dbd1d1;
+      border-radius: 0.375rem;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-6">
+
+<div id="app" class="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow">
+  <h1 class="text-2xl font-bold mb-6">Booking Form</h1>
+   <div v-if="!booking">
+      <div>
+        <p class="text-blue-600">Booking is successfully, Thank you!</p>
+      </div>
+   </div>
+   <div v-else>
+     <div class="mb-4">
+       <label class="font-semibold">Service Type</label>
+       <div class="flex gap-4 mt-2">
+         <label v-for="s in services" :key="s" class="flex items-center gap-2">
+           <input type="radio" v-model="form.service" :value="s" /> {{ s }}
+         </label>
+       </div>
+     </div>
+
+     <div class="grid grid-cols-2 gap-4 mb-4">
+       <div>
+         <label>Check-in</label>
+         <input type="date" v-model="form.checkIn" class="input" :min="today"/>
+       </div>
+       <div>
+         <label>Check-out</label>
+         <input type="date" v-model="form.checkOut" class="input" />
+         <p v-if="errors.date" class="text-red-500 text-sm">{{ errors.date }}</p>
+       </div>
+     </div>
+   
+     <div class="grid grid-cols-2 gap-4 mb-4">
+       <div>
+         <label>Adults</label>
+         <input type="text" min="1" max="10" v-model.number="form.adults" class="input" />
+       </div>
+       <div>
+         <label>Children</label>
+         <input type="text" min="0" max="10" v-model.number="form.children" class="input" />
+       </div>
+     </div>
+   
+     <div v-if="form.service === 'Hotel'" class="mb-4">
+       <label>Room Type</label>
+       <select v-model="form.room" class="input">
+         <option disabled value="">Select room</option>
+         <option>Standard</option>
+         <option>Deluxe</option>
+         <option>Suite</option>
+       </select>
+     </div>
+   
+     <div v-if="form.service === 'Flight'" class="mb-4">
+       <label>Flight Class</label>
+       <select v-model="form.flightClass" class="input">
+         <option disabled value="">Select class</option>
+         <option>Economy</option>
+         <option>Business</option>
+         <option>First</option>
+       </select>
+     </div>
+   
+     <div class="mb-4">
+       <label class="font-semibold">Meal Plan</label>
+       <div class="flex gap-4 mt-2">
+         <label v-for="m in meals" :key="m" class="flex items-center gap-2">
+           <input type="checkbox" :value="m" v-model="form.meals" /> {{ m }}
+         </label>
+       </div>
+     </div>
+   
+     <div class="mb-4">
+       <label class="font-semibold">Add-ons</label>
+       <div class="flex gap-4 mt-2">
+         <label v-for="a in addons" :key="a" class="flex items-center gap-2">
+           <input type="checkbox" :value="a" v-model="form.addons" /> {{ a }}
+         </label>
+       </div>
+     </div>
+   
+     <div class="mb-4">
+       <label>Special Requests</label>
+       <textarea v-model="form.requests" class="input"></textarea>
+     </div>
+   
+     <h2 class="text-xl font-semibold mt-6 mb-2">Customer Details</h2>
+   
+     <div class="grid grid-cols-2 gap-4 mb-4">
+       <input placeholder="Name" v-model="form.name" class="input" />
+       <input placeholder="Email" v-model="form.email" class="input" />
+     </div>
+   
+     <div class="mb-4">
+       <input placeholder="Phone" v-model="form.phone" class="input" />
+     </div>
+   
+     <div class="mb-4">
+       <label class="font-semibold">Payment</label>
+       <div class="flex gap-4 mt-2">
+         <label><input type="radio" value="Card" v-model="form.payment" /> Card</label>
+         <label><input type="radio" value="Cash" v-model="form.payment" /> Cash</label>
+       </div>
+     </div>
+   
+     <div v-if="form.payment === 'Card'" class="grid grid-cols-2 gap-4 mb-4">
+       <input placeholder="Card Number" class="input" />
+       <input placeholder="Expiry" class="input" />
+     </div>
+   
+     <div class="mb-4">
+       <input placeholder="Promo Code" v-model="form.promo" class="input" />
+     </div>
+   
+     <div class="bg-gray-50 p-4 rounded">
+       <h3 class="font-semibold mb-2">Price Breakdown</h3>
+       <p>Base: ${{ basePrice }}</p>
+       <p>Children: ${{ childCost }}</p>
+       <p>Add-ons: ${{ addonCost }}</p>
+       <p class="font-bold">Total: ${{ total }}</p>
+     </div>
+   </div>
+  <div class="text-center">
+    <button @click="comfirmBooking" v-if="booking" :disabled="!isValid" class="cursor-pointer mt-6 bg-blue-600 text-white px-6 py-2 rounded disabled:opacity-50">
+      Confirm Booking
+    </button>
+  </div>
+</div>
+
+<script>
+const { createApp } = Vue
+
+createApp({
+  data() {
+    return {
+      services: ['Hotel', 'Flight', 'Package'],
+      meals: ['Breakfast', 'Lunch', 'Dinner'],
+      addons: ['Airport pickup', 'Travel insurance', 'City tour'],
+      booking: true,
+      form: {
+        service: 'Hotel',
+        checkIn: new Date().toISOString().split('T')[0],
+        checkOut: '',
+        adults: 1,
+        children: 0,
+        room: '',
+        flightClass: '',
+        meals: [],
+        addons: [],
+        requests: '',
+        name: '',
+        email: '',
+        phone: '',
+        payment: 'Card',
+        promo: ''
+      },
+      errors: {}
+    }
+  },
+  computed: {
+    today() {
+      return new Date().toISOString().split('T')[0];
+    },
+    basePrice() {
+      return this.form.service === 'Hotel' ? 100 : 80
+    },
+    childCost() {
+      return this.form.children * 20
+    },
+    addonCost() {
+      return this.form.addons.length * 15
+    },
+    total() {
+      return this.basePrice + this.childCost + this.addonCost
+    },
+    isValid() {
+      return this.form.name && this.form.email && !this.errors.date
+    }
+  },
+  watch: {
+    'form.checkOut': 'validation',
+  },
+  methods: {
+    comfirmBooking() {
+      this.booking = false;
+    },
+    validation() {
+      if (this.form.checkOut <= this.form.checkIn) {
+        this.errors.date = 'Check-out must be after check-in'
+      } else {
+        this.errors.date = ''
+      }
+    }
+  }
+}).mount('#app')
+</script>
+
+
+</body>
+</html>

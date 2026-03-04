@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Job Application Form</title>
+ <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Asap&family=Lobster&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.css">
+  <style>
+    body {
+        font-family: "Asap", sans-serif;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-100 p-6">
+<div id="app" class="max-w-5xl mx-auto bg-white p-6 rounded-lg shadow">
+
+  <h1 class="text-3xl font-bold mb-4"><i class="ri-macbook-line"></i> Job Application Form</h1>
+  <div class="mb-6">
+    <div class="w-full bg-gray-200 rounded h-3">
+      <div class="bg-green-500 h-3 rounded"
+           :style="{ width: progress + '%' }"></div>
+    </div>
+    <p class="text-sm mt-1">{{ progress }}% completed</p>
+  </div>
+  <div v-if="submitted" class="bg-green-100 text-green-800 p-4 rounded mb-4">
+    Application submitted successfully!
+  </div>
+
+  <form @submit.prevent="submitForm" class="space-y-6">
+    <section>
+      <h2 class="text-xl font-semibold mb-2">Personal Information</h2>
+
+      <div class="grid md:grid-cols-2 gap-4">
+        <label for="">Username <span class="text-red-600 font-bold">*</span>
+          <input v-model="form.name"
+                 class="w-full p-2 border rounded border-gray-400">
+        </label>
+        <label for="">Email <span class="text-red-600 font-bold">*</span>
+          <input v-model="form.email"
+                 class="w-full p-2 border rounded border-gray-400">
+        </label>
+
+        <label for="">Phone Number <span class="text-red-600 font-bold">*</span>
+          <input v-model="form.phone"
+                 class="w-full p-2 border rounded border-gray-400">
+        </label>
+
+        <label for="">LinkedIn URL <span class="text-red-600 font-bold">*</span>
+          <input v-model="form.linkedin"
+                 class="w-full p-2 border rounded border-gray-400">
+        </label>
+
+      </div>
+
+      <div class="grid md:grid-cols-4 gap-4 mt-3">
+        <label for="">Street <span class="text-red-600 font-bold">*</span>
+          <input v-model="form.street" class="p-2 border rounded border-gray-400 w-full">
+        </label>
+        <label for="">City <span class="text-red-600 font-bold">*</span>
+          <input v-model="form.city" class="p-2 border rounded border-gray-400 w-full">
+        </label>
+        <label for="">State <span class="text-red-600 font-bold">*</span>
+          <input v-model="form.state" class="p-2 border rounded border-gray-400 w-full">
+        </label>
+        <label for="">ZIP <span class="text-red-600 font-bold">*</span>
+          <input v-model="form.zip"  class="p-2 border rounded w-full border-gray-400">
+        </label>
+        
+      </div>
+    </section>
+
+    <section>
+      <h2 class="text-xl font-semibold mb-2">Professional Information</h2>
+
+      <div class="grid md:grid-cols-2 gap-4">
+        <label for="">Curre Job Title <span class="text-red-600 font-bold">*</span>
+          <input v-model="form.jobTitle"
+                 class="p-2 border rounded w-full border-gray-400">
+        </label>
+
+        <label for="">Years of Experience <span class="text-red-600 font-bold">*</span>
+          <input type="number" v-model.number="form.experience" min="0" max="50"
+               placeholder=""
+               class="p-2 border rounded border-gray-400 w-full">
+        </label>
+
+        
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-4 mt-3">
+        <label for="">Period <span class="text-red-600 font-bold">*</span>
+          <select v-model="form.notice" class="p-2 border rounded border-gray-400 w-full">
+            <option disabled value="">Notice Period</option>
+            <option>Immediate</option>
+            <option>2 weeks</option>
+            <option>1 month</option>
+            <option>2 months</option>
+          </select>
+        </label>
+
+        <label for="">Willing <span class="text-red-600 font-bold">*</span>
+          <select v-model="form.relocate" class="p-2 border rounded border-gray-400 w-full">
+            <option disabled value="">Willing to Relocate?</option>
+            <option>Yes</option>
+            <option>No</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-4 mt-3">
+        <label for="">Salary Min <span class="text-red-600 font-bold">*</span>
+          <input type="text" v-model.number="form.salaryMin"
+           class="p-2 border rounded border-gray-400 w-full">
+        </label>
+
+        <label for="">Salary Max <span class="text-red-600 font-bold">*</span>
+          <input type="text" v-model.number="form.salaryMax"
+              class="p-2 border rounded border-gray-400 w-full">
+        </label>
+
+        <label for="">Currency <span class="text-red-600 font-bold">*</span>
+          <select v-model="form.currency" class="p-2 border rounded border-gray-400 w-full">
+            <option>USD</option>
+            <option>KHR</option>
+            <option>EUR</option>
+          </select>
+        </label>
+      </div>
+
+      <p v-if="salaryError" class="text-red-600 text-sm mt-1">
+        Salary min must be less than max
+      </p>
+    </section>
+
+    <section>
+      <h2 class="text-xl font-semibold mb-2">Education</h2>
+
+      <div class="grid md:grid-cols-2 gap-4">
+        <label for="">Degree <span class="text-red-600 font-bold">*</span>
+          <select v-model="form.degree" class="p-2 border rounded border-gray-400 w-full">
+            <option disabled value="">Highest Degree</option>
+            <option>High School</option>
+            <option>Bachelor</option>
+            <option>Master</option>
+            <option>PhD</option>
+          </select>
+        </label>
+        <label for="">Major <span class="text-red-600 font-bold">*</span>
+          <input v-model="form.field"
+                 class="p-2 border rounded border-gray-400 w-full">
+        </label>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-4 mt-3">
+        <label for="">University <span class="text-red-600 font-bold">*</span>
+          <input v-model="form.university"
+                 class="p-2 border rounded border-gray-400 w-full">
+        </label>
+        <label for="">Graduation Year <span class="text-red-600 font-bold">*</span>
+          <input type="number" v-model.number="form.gradYear"
+               placeholder=""
+               class="p-2 border rounded border-gray-400 w-full">
+        </label>
+
+        
+      </div>
+      <div class="grid md:grid-cols-2 gap-4 mt-3">
+        <p></p>
+        <p v-if="gradYearError" class="text-red-600 text-sm mt-1">
+          Graduation year cannot be in the future
+        </p>
+      </div>
+
+    </section>
+    <section>
+      <h2 class="text-xl font-semibold mb-2">Skills</h2>
+
+      <div class="grid md:grid-cols-2 gap-4">
+        <div>
+          <p class="font-medium">Programming Languages</p>
+          <label v-for="l in languages" class="block">
+            <input type="checkbox" v-model="form.skills" :value="l"> {{ l }}
+          </label>
+        </div>
+
+        <div>
+          <p class="font-medium">Frameworks</p>
+          <label v-for="f in frameworks" class="block">
+            <input type="checkbox" v-model="form.skills" :value="f"> {{ f }}
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="text-xl font-semibold mb-2">Work Experience</h2>
+
+      <div v-for="(exp,i) in form.experiences" :key="i"
+           class="border p-3 rounded mb-3">
+        <input v-model="exp.company" placeholder="Company Name"
+               class="w-full p-2 border rounded mb-2">
+
+        <input v-model="exp.title" placeholder="Job Title"
+               class="w-full p-2 border rounded mb-2">
+
+        <div class="grid md:grid-cols-2 gap-2">
+          <input type="date" v-model="exp.start" class="p-2 border rounded">
+          <input type="date" v-model="exp.end" class="p-2 border rounded">
+        </div>
+
+        <textarea v-model="exp.desc" placeholder="Description"
+                  class="w-full p-2 border rounded mt-2"></textarea>
+
+        <button type="button" @click="removeExperience(i)"
+                class="text-white mt-2 bg-red-500 px-2 py-1 rounded-sm cursor-pointer"><i class="ri-delete-bin-6-line"></i> Remove</button>
+      </div>
+
+      <button type="button" @click="addExperience"
+              class="bg-blue-600 text-white px-3 py-1 rounded cursor-pointer">
+        <i class="ri-add-circle-line"></i> Add Experience
+      </button>
+    </section>
+    <section>
+      <h2 class="text-xl font-semibold mb-2">Documents</h2>
+      <div class="flex bg-blue-600 p-1 w-fit rounded-sm cursor-pointer text-white">
+       </i><span> <i class="ri-file-line"></i></span>
+        <input type="file" @change="handleFile">
+      </div>
+      <p v-if="form.resume" class="text-sm mt-1">📄 {{ form.resume }}</p>
+
+      <textarea v-model="form.cover" maxlength="1000"
+                class="w-full p-2 border rounded mt-3"
+                placeholder="Cover Letter"></textarea>
+
+      <p class="text-sm text-gray-500">
+        {{ form.cover.length }}/1000 characters
+      </p>
+    </section>
+
+    <section>
+      <h2 class="text-xl font-semibold mb-2">Additional</h2>
+      <div class="grid md:grid-cols-2 gap-4 mt-3">
+        <select v-model="form.source" class="p-2 border rounded mb-2">
+          <option disabled value="">How did you hear about us?</option>
+          <option>LinkedIn</option>
+          <option>Friend</option>
+          <option>Website</option>
+        </select>
+  
+        <input type="date" v-model="form.startDate"
+               class="p-2 border rounded mb-2">
+         
+      </div>
+
+      <textarea v-model="form.comments"
+                class="w-full p-2 border rounded mt-3"
+                placeholder="Additional comments"></textarea>
+
+      <label class="block mt-2">
+        <input type="checkbox" v-model="form.consent">
+        I agree to the terms *
+      </label>
+    </section>
+
+    <div class="flex gap-3">
+      <button type="submit"
+              :disabled="!isValid"
+              class="bg-green-600 text-white px-4 py-2 rounded disabled:opacity-50"
+              :class="!isValid ? 'cursor-not-allowed' : 'cursor-pointer'">
+        <i class="ri-file-download-line"></i> Submit
+      </button>
+
+      <button type="button" @click="saveDraft"
+              class="bg-gray-600 text-white px-4 py-2 rounded cursor-pointer">
+        <i class="ri-save-line"></i> Save Draft
+      </button>
+
+      <button type="button" @click="printForm"
+              class="bg-blue-600 text-white px-4 py-2 rounded cursor-pointer">
+        <i class="ri-printer-line"></i> Print
+      </button>
+    </div>
+
+  </form>
+</div>
+
+<script>
+const { createApp } = Vue;
+
+createApp({
+  data() {
+    return {
+      submitted: false,
+      languages: ["JavaScript", "Python", "Java", "C++"],
+      frameworks: ["Vue", "React", "Angular"],
+      form: {
+        name: "", email: "", phone: "",
+        street: "", city: "", state: "", zip: "",
+        linkedin: "",
+        jobTitle: "", experience: "",
+        salaryMin: "", salaryMax: "", currency: "USD",
+        notice: "", relocate: "",
+        degree: "", field: "", university: "", gradYear: "",
+        skills: [],
+        experiences: [],
+        resume: "", cover: "",
+        source: "", startDate: "",
+        comments: "", consent: false
+      }
+    }
+  },
+  computed: {
+    salaryError() {
+      return this.form.salaryMin && this.form.salaryMax && this.form.salaryMin >= this.form.salaryMax;
+    },
+    gradYearError() {
+      return this.form.gradYear &&
+             this.form.gradYear > new Date().getFullYear();
+    },
+    isValid() {
+      return this.form.name &&
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.form.email) &&
+        /^\d{8,12}$/.test(this.form.phone) &&
+        this.form.consent &&
+        !this.salaryError &&
+        !this.gradYearError;
+    },
+    progress() {
+      const filled = Object.values(this.form).filter(v => v && v.length !== 0);
+      return Math.min(100, Math.round((filled.length / 24) * 100));
+    }
+  },
+  methods: {
+    addExperience() {
+      this.form.experiences.push({
+        company: "", title: "", start: "", end: "", desc: ""
+      });
+    },
+    removeExperience(i) {
+      this.form.experiences.splice(i, 1);
+    },
+    handleFile(e) {
+      this.form.resume = e.target.files[0]?.name || "";
+    },
+    saveDraft() {
+      localStorage.setItem("jobDraft", JSON.stringify(this.form));
+      alert("Draft saved");
+    },
+    submitForm() {
+      this.submitted = true;
+      localStorage.removeItem("jobDraft");
+    },
+    printForm() {
+      window.print();
+    }
+  },
+  created() {
+    const draft = localStorage.getItem("jobDraft");
+    if (draft) this.form = JSON.parse(draft);
+  }
+}).mount("#app");
+</script>
+
+</body>
+</html>

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vue Blog Demo</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+
+<div id="app" class="min-h-screen flex flex-col">
+
+  <!-- App Header -->
+  <blog-header :user="currentUser"></blog-header>
+
+  <div class="flex flex-1 max-w-7xl mx-auto p-4 gap-4">
+    <!-- Main Content -->
+    <main class="flex-1 space-y-6">
+
+      <post-card 
+        v-for="post in posts" 
+        :key="post.id" 
+        :post="post" 
+        @like="togglePostLike(post.id)">
+        
+        <template #comments>
+          <div class="mt-4 space-y-2">
+            <h4 class="font-semibold">Comments</h4>
+            <comment-item 
+              v-for="comment in post.comments" 
+              :key="comment.id" 
+              :comment="comment"
+              :current-user="currentUser"
+              @like="toggleCommentLike(post.id, comment.id)"
+              @delete="deleteComment(post.id, comment.id)">
+            </comment-item>
+
+            <comment-form 
+              @submit="addComment(post.id, $event)">
+            </comment-form>
+          </div>
+        </template>
+      </post-card>
+
+    </main>
+
+    <!-- Sidebar -->
+    <aside class="w-64 space-y-4">
+      <sidebar-widget title="Recent Posts" :items="recentPosts"></sidebar-widget>
+      <sidebar-widget title="Categories" :items="categories"></sidebar-widget>
+      <sidebar-widget title="Tags" :items="tags"></sidebar-widget>
+    </aside>
+  </div>
+
+  <!-- Footer -->
+  <blog-footer></blog-footer>
+</div>
+
+<script>
+const { createApp, ref, reactive } = Vue;
+
+createApp({
+  setup() {
+    const currentUser = ref({ id: 1, name: "CurrentUser" });
+
+    const posts = reactive([
+      {
+        id: 1,
+        title: "Vue 3 Composition API",
+        excerpt: "Learn the Composition API in Vue 3 for better reusability.",
+        author: { name: "Alice", avatar: "" },
+        date: "2026-02-05",
+        image: "https://via.placeholder.com/400x200",
+        likes: 10,
+        liked: false,
+        comments: [
+          { id: 1, author: "Bob", text: "Great post!", likes: 2, liked: false, userId: 2 }
+        ]
+      },
+      {
+        id: 2,
+        title: "TailwindCSS Tips",
+        excerpt: "Quick tips for using TailwindCSS efficiently.",
+        author: { name: "Charlie", avatar: "" },
+        date: "2026-02-04",
+        image: "https://via.placeholder.com/400x200",
+        likes: 5,
+        liked: false,
+        comments: []
+      },
+      {
+        id: 3,
+        title: "Building Reusable Components",
+        excerpt: "How to design reusable Vue components for your projects.",
+        author: { name: "Alice", avatar: "" },
+        date: "2026-02-03",
+        image: "https://via.placeholder.com/400x200",
+        likes: 8,
+        liked: false,
+        comments: []
+      }
+    ]);
+
+    const recentPosts = ["Vue 3 Composition API", "TailwindCSS Tips", "Reusable Components"];
+    const categories = ["Vue", "CSS", "JavaScript"];
+    const tags = ["Vue3", "Tailwind", "Frontend"];
+
+    const togglePostLike = (postId) => {
+      const post = posts.find(p => p.id === postId);
+      post.liked = !post.liked;
+      post.likes += post.liked ? 1 : -1;
+    };
+
+    const toggleCommentLike = (postId, commentId) => {
+      const post = posts.find(p => p.id === postId);
+      const comment = post.comments.find(c => c.id === commentId);
+      comment.liked = !comment.liked;
+      comment.likes += comment.liked ? 1 : -1;
+    };
+
+    const addComment = (postId, text) => {
+      const post = posts.find(p => p.id === postId);
+      const newComment = { 
+        id: Date.now(), 
+        author: currentUser.value.name, 
+        text, likes: 0, liked: false, 
+        userId: currentUser.value.id 
+      };
+      post.comments.push(newComment);
+    };
+
+    const deleteComment = (postId, commentId) => {
+      const post = posts.find(p => p.id === postId);
+      post.comments = post.comments.filter(c => c.id !== commentId);
+    };
+
+    return {
+      posts,
+      currentUser,
+      recentPosts,
+      categories,
+      tags,
+      togglePostLike,
+      toggleCommentLike,
+      addComment,
+      deleteComment
+    };
+  },
+  components: {
+
+    // Blog Header
+    'blog-header': {
+      props: ['user'],
+      template: `
+        <header class="bg-white shadow p-4 flex justify-between items-center">
+          <div class="text-xl font-bold">My Vue Blog</div>
+          <nav class="flex gap-4">
+            <a href="#" class="hover:text-blue-500">Home</a>
+            <a href="#" class="hover:text-blue-500">About</a>
+            <a href="#" class="hover:text-blue-500">Contact</a>
+          </nav>
+          <div class="flex items-center gap-2">
+            <input type="text" placeholder="Search..." class="border rounded px-2 py-1">
+            <div v-if="user" class="font-semibold">{{ user.name }}</div>
+          </div>
+        </header>
+      `
+    },
+
+    // Post Card
+    'post-card': {
+      props: ['post'],
+      template: `
+        <div class="bg-white rounded shadow p-4">
+          <img v-if="post.image" :src="post.image" class="rounded mb-2 w-full h-48 object-cover">
+          <h3 class="font-bold text-xl">{{ post.title }}</h3>
+          <p class="text-gray-600 text-sm">by {{ post.author.name }} | {{ post.date }}</p>
+          <p class="my-2">{{ post.excerpt }}</p>
+          <div class="flex gap-2 items-center">
+            <button @click="$emit('like')" class="px-2 py-1 bg-blue-500 text-white rounded">
+              {{ post.liked ? 'Unlike' : 'Like' }} ({{ post.likes }})
+            </button>
+            <button class="px-2 py-1 bg-gray-300 rounded">Read More</button>
+            <button class="px-2 py-1 bg-gray-300 rounded">Share</button>
+          </div>
+          <slot name="comments"></slot>
+        </div>
+      `
+    },
+
+    // Comment Item
+    'comment-item': {
+      props: ['comment', 'currentUser'],
+      template: `
+        <div class="bg-gray-100 rounded p-2 flex justify-between items-start">
+          <div>
+            <p class="font-semibold">{{ comment.author }} <span class="text-gray-500 text-xs">{{ comment.date || '' }}</span></p>
+            <p>{{ comment.text }}</p>
+            <div class="flex gap-2 mt-1">
+              <button @click="$emit('like')" class="text-sm">{{ comment.liked ? 'Unlike' : 'Like' }} ({{ comment.likes }})</button>
+              <button class="text-sm">Reply</button>
+              <button v-if="currentUser && currentUser.id === comment.userId" @click="$emit('delete')" class="text-sm text-red-500">Delete</button>
+            </div>
+          </div>
+        </div>
+      `
+    },
+
+    // Comment Form
+    'comment-form': {
+      data() {
+        return { text: '', maxChars: 500 };
+      },
+      template: `
+        <div class="mt-2">
+          <textarea v-model="text" :maxlength="maxChars" class="w-full border rounded p-2" placeholder="Write a comment..."></textarea>
+          <div class="flex justify-between items-center mt-1">
+            <span class="text-sm text-gray-500">{{ text.length }}/{{ maxChars }}</span>
+            <div class="flex gap-2">
+              <button @click="submitComment" class="px-2 py-1 bg-blue-500 text-white rounded">Submit</button>
+              <button @click="text=''" class="px-2 py-1 bg-gray-300 rounded">Cancel</button>
+            </div>
+          </div>
+        </div>
+      `,
+      methods: {
+        submitComment() {
+          if(this.text.trim() !== '') {
+            this.$emit('submit', this.text.trim());
+            this.text = '';
+          }
+        }
+      }
+    },
+
+    // Sidebar Widget
+    'sidebar-widget': {
+      props: ['title', 'items'],
+      template: `
+        <div class="bg-white rounded shadow p-4">
+          <h4 class="font-bold mb-2">{{ title }}</h4>
+          <ul class="space-y-1">
+            <li v-for="item in items" :key="item" class="hover:text-blue-500 cursor-pointer">{{ item }}</li>
+          </ul>
+        </div>
+      `
+    },
+
+    // Blog Footer
+    'blog-footer': {
+      template: `
+        <footer class="bg-white shadow mt-4 p-4 text-center">
+          <p>&copy; 2026 My Vue Blog. All rights reserved.</p>
+          <div class="flex justify-center gap-4 mt-2">
+            <a href="#" class="text-blue-500">Twitter</a>
+            <a href="#" class="text-blue-500">Facebook</a>
+            <a href="#" class="text-blue-500">Instagram</a>
+          </div>
+          <div class="mt-2">
+            <input type="email" placeholder="Subscribe to newsletter" class="border rounded px-2 py-1">
+            <button class="px-2 py-1 bg-blue-500 text-white rounded">Subscribe</button>
+          </div>
+        </footer>
+      `
+    },
+
+  }
+}).mount('#app');
+</script>
+</body>
+</html>

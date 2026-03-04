@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vue Counter</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="min-h-screen flex items-center justify-center bg-gray-100">
+
+  <div id="app" class="text-center">
+    <p v-show="isVisible">This text can be toggled</p>
+    <button @click="isVisible = !isVisible">Toggle</button>
+    <ul>
+      <li v-for="(value, key) in user" class="text-red-600">{{value}}</li>
+    </ul>
+    <div v-for="product in products" :key="product.id" class="text-blue-700">
+      {{product.name}}
+    </div>
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+
+    createApp({
+      data() {
+        return {
+        user: {
+          name: 'John Doe',
+          age: 30,
+          email: 'john@example.com'
+        },
+        products: [
+        { id: 1, name: 'Laptop', price: 999 },
+        { id: 2, name: 'Phone', price: 599 },
+        { id: 3, name: 'Tablet', price: 399 }
+        ]
+      }
+      },
+      methods: {
+        toggleClass() {
+          this.activeClass = this.activeClass === 'text-blue-500'? 'text-green-500':'text-blue-500';
+        }
+      }
+    }).mount('#app');
+  </script>
+
+</body>
+</html>

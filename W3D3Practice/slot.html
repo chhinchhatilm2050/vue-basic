@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auto-Save Notes</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 p-8">
+  <div id="app">
+    <alert-box>
+  <h3>⚠️ Warning</h3>
+  <p>This is a <strong>serious</strong> message!</p>
+  <button>Learn More</button>
+</alert-box>
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+    const app = createApp({
+
+    });
+    app.component('alert-box', {
+    template: `
+        <div class="alert">
+        <slot></slot>
+        <slot></slot>
+        </div>
+    `
+    });
+
+    app.mount('#app');
+  </script>
+</body>
+</html>

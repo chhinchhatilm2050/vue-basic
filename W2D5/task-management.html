@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Task Manager</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.css">
+  <link href="https://fonts.googleapis.com/css2?family=Asap&family=Lobster&display=swap" rel="stylesheet">
+  <style>
+    body {
+        font-family: "Asap", sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-blue-300 min-h-screen">
+  <div class="text-center py-6">
+    <h1 class="text-3xl font-bold flex justify-center items-center gap-2">
+     <i class="ri-todo-line text-blue-600"></i> Task Manager
+    </h1>
+  </div>
+
+  <div class="max-w-3xl mx-auto bg-white p-6 rounded-xl shadow">
+    <h2 class="text-lg font-semibold mb-4">Add New Task</h2>
+
+    <input
+      id="title"
+      type="text"
+      placeholder="Enter task title..."
+      class="w-full border rounded-lg p-2 border-gray-400"
+    />
+    <p id="error-title" class=" text-red-600 hidden">require!</p>
+
+    <textarea
+      id="description"
+      placeholder="Enter task description..."
+      class="w-full border rounded-lg p-2 mt-4 border-gray-400"
+    ></textarea>
+    <p id="error-description" class=" text-red-600 hidden">require!</p>
+    <button
+      onclick="addTask()"
+      class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 mt-4 cursor-pointer"
+    >
+      Add Task
+    </button>
+  </div>
+
+  <div class="flex justify-center gap-3 mt-6">
+    <button onclick="setFilter('all')" class="filter-btn bg-blue-600 text-white px-4 py-1 rounded cursor-pointer">All</button>
+    <button onclick="setFilter('active')" class="filter-btn bg-gray-200 px-4 py-1 rounded cursor-pointer">Active</button>
+    <button onclick="setFilter('completed')" class="filter-btn bg-gray-200 px-4 py-1 rounded cursor-pointer">Completed</button>
+  </div>
+
+  <div class="max-w-3xl mx-auto bg-white mt-4 p-4 rounded-xl shadow flex justify-between text-center">
+    <div>
+      <p class="font-bold text-xl" id="totalCount">0</p>
+      <p class="text-gray-500">Total Task</p>
+    </div>
+    <div>
+      <p class="font-bold text-xl text-blue-600" id="activeCount">0</p>
+      <p class="text-gray-500">Active</p>
+    </div>
+    <div>
+      <p class="font-bold text-xl text-green-600" id="completedCount">0</p>
+      <p class="text-gray-500">Completed</p>
+    </div>
+  </div>
+
+  <div id="taskList" class="max-w-3xl mx-auto mt-4 space-y-3"></div>
+
+  <script src="script.js"></script>
+
+</body>
+</html>

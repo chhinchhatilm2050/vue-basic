@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Like Button Component</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+  <div id="app">
+    <div class="max-w-2xl mx-auto">
+      <div class="bg-white rounded-lg shadow-lg p-8 mb-6">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">Like Button Demo</h1>
+        <p class="text-xl text-gray-600">
+          Total Likes:
+          <span class="font-bold text-blue-600">{{ totalLikes }}</span>
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white rounded-lg shadow-md p-6">
+          <h3 class="font-semibold text-gray-800 mb-3">Photo 1</h3>
+          <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400"
+               class="w-full h-48 object-cover rounded mb-3">
+          <like-button @liked="onLike" @unliked="onUnlike"></like-button>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-6">
+          <h3 class="font-semibold text-gray-800 mb-3">Photo 2</h3>
+          <img src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400"
+               class="w-full h-48 object-cover rounded mb-3">
+          <like-button @liked="onLike" @unliked="onUnlike"></like-button>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-6">
+          <h3 class="font-semibold text-gray-800 mb-3">Photo 3</h3>
+          <img src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=400"
+               class="w-full h-48 object-cover rounded mb-3">
+          <like-button @liked="onLike" @unliked="onUnlike"></like-button>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-6">
+          <h3 class="font-semibold text-gray-800 mb-3">Photo 4</h3>
+          <img src="https://images.unsplash.com/photo-1475924156734-496f6cac6ec1?w=400"
+               class="w-full h-48 object-cover rounded mb-3">
+          <like-button @liked="onLike" @unliked="onUnlike"></like-button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+
+    const app = createApp({
+      data() {
+        return {
+          totalLikes: 0
+        }
+      },
+      methods: {
+        onLike() {
+          this.totalLikes++;
+        },
+        onUnlike() {
+          this.totalLikes--;
+        }
+      }
+    });
+
+    app.component('like-button', {
+      data() {
+        return {
+          isLiked: false
+        }
+      },
+      emits: ['liked', 'unliked'],
+      methods: {
+        toggleLike() {
+          this.isLiked = !this.isLiked;
+
+          if (this.isLiked) {
+            this.$emit('liked');
+          } else {
+            this.$emit('unliked');
+          }
+        }
+      },
+      template: `
+        <button
+          @click="toggleLike"
+          :class="[
+            'px-6 py-2 rounded-full font-semibold transition-all',
+            isLiked
+              ? 'bg-red-500 text-white hover:bg-red-600'
+              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+          ]"
+        >
+          {{ isLiked ? '❤️ Liked' : '🤍 Like' }}
+        </button>
+      `
+    });
+
+    app.mount('#app');
+  </script>
+</body>
+</html>

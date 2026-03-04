@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Time Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Vue 3 -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6">
+<div id="app" class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+  <!-- Timer Panel -->
+  <div class="bg-white p-4 rounded shadow">
+    <h2 class="text-xl font-bold mb-3">Active Timer</h2>
+    <input type="text" v-model="activeProject" placeholder="Project" class="border p-2 w-full mb-2">
+    <input type="text" v-model="activeTask" placeholder="Task" class="border p-2 w-full mb-2">
+
+    <div class="text-center my-2 text-2xl font-mono">{{ formattedTimer }}</div>
+
+    <div class="flex gap-2">
+      <button @click="startTimer" class="bg-green-500 text-white px-3 py-1 rounded">Start</button>
+      <button @click="pauseTimer" class="bg-yellow-500 text-white px-3 py-1 rounded">Pause</button>
+      <button @click="stopTimer" class="bg-red-500 text-white px-3 py-1 rounded">Stop</button>
+    </div>
+  </div>
+
+  <!-- Stats Dashboard -->
+  <div class="bg-white p-4 rounded shadow lg:col-span-2">
+    <h2 class="text-xl font-bold mb-3">Quick Stats</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+      <div class="bg-blue-50 p-3 rounded text-center">
+        <p>Total Hours Today</p>
+        <strong>{{ totalHoursToday.toFixed(2) }}</strong>
+      </div>
+      <div class="bg-green-50 p-3 rounded text-center">
+        <p>Total Hours This Week</p>
+        <strong>{{ totalHoursWeek.toFixed(2) }}</strong>
+      </div>
+      <div class="bg-yellow-50 p-3 rounded text-center">
+        <p>Total Hours This Month</p>
+        <strong>{{ totalHoursMonth.toFixed(2) }}</strong>
+      </div>
+      <div class="bg-purple-50 p-3 rounded text-center">
+        <p>Total Earnings</p>
+        <strong>${{ totalEarnings.toFixed(2) }}</strong>
+      </div>
+    </div>
+
+    <h3 class="font-bold mt-4 mb-2">Recent Time Entries</h3>
+    <ul class="list-disc ml-6">
+      <li v-for="entry in recentEntries" :key="entry.id">
+        {{ entry.project }} – {{ entry.task }} – {{ (entry.duration/60).toFixed(2) }} h – ${{ (entry.billable ? entry.duration/60*entry.hourlyRate : 0).toFixed(2) }}
+        <button @click="deleteEntry(entry.id)" class="text-red-500 ml-2 text-sm">Delete</button>
+      </li>
+    </ul>
+  </div>
+
+</div>
+
+<script>
+const { createApp } = Vue;
+
+createApp({
+  data() {
+    return {
+      timeEntries: JSON.parse(localStorage.getItem('timeEntries')) || [],
+      activeProject: '',
+      activeTask: '',
+      activeStartTime: null,
+      timer: 0,
+      timerInterval: null
+    };
+  },
+  computed: {
+    formattedTimer() {
+      const h = Math.floor(this.timer / 3600);
+      const m = Math.floor((this.timer % 3600)/60);
+      const s = this.timer % 60;
+      return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    },
+    totalHoursToday() {
+      const today = new Date().toISOString().slice(0,10);
+      return this.timeEntries
+        .filter(e => e.startTime.slice(0,10) === today)
+        .reduce((sum,e)=> sum+e.duration/60,0);
+    },
+    totalHoursWeek() {
+      const now = new Date();
+      const startWeek = new Date(now.setDate(now.getDate()-now.getDay()));
+      return this.timeEntries
+        .filter(e => new Date(e.startTime) >= startWeek)
+        .reduce((sum,e)=> sum+e.duration/60,0);
+    },
+    totalHoursMonth() {
+      const now = new Date();
+      return this.timeEntries
+        .filter(e => {
+          const d = new Date(e.startTime);
+          return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear();
+        })
+        .reduce((sum,e)=> sum+e.duration/60,0);
+    },
+    totalEarnings() {
+      return this.timeEntries
+        .filter(e=>e.billable)
+        .reduce((sum,e)=> sum + e.duration/60*e.hourlyRate,0);
+    },
+    billableHours() {
+      return this.timeEntries
+        .filter(e=>e.billable)
+        .reduce((sum,e)=>sum+e.duration/60,0);
+    },
+    nonBillableHours() {
+      return this.timeEntries
+        .filter(e=>!e.billable)
+        .reduce((sum,e)=>sum+e.duration/60,0);
+    },
+    recentEntries() {
+      return [...this.timeEntries].slice(-5).reverse();
+    }
+  },
+  methods: {
+    startTimer() {
+      if(!this.activeProject || !this.activeTask) return;
+      if(this.timerInterval) return;
+      this.activeStartTime = new Date();
+      this.timerInterval = setInterval(()=> this.timer++,1000);
+    },
+    pauseTimer() {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
+    },
+    stopTimer() {
+      if(!this.activeStartTime) return;
+      const endTime = new Date();
+      const durationMinutes = Math.round(this.timer/60);
+      this.timeEntries.push({
+        id: Date.now(),
+        project: this.activeProject,
+        task: this.activeTask,
+        startTime: this.activeStartTime.toISOString(),
+        endTime: endTime.toISOString(),
+        duration: durationMinutes,
+        hourlyRate: 50,
+        billable: true,
+        tags: []
+      });
+      this.activeProject = '';
+      this.activeTask = '';
+      this.activeStartTime = null;
+      this.timer = 0;
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
+    },
+    addManualEntry(entry){
+      entry.id = Date.now();
+      this.timeEntries.push({...entry});
+    },
+    deleteEntry(id){
+      this.timeEntries = this.timeEntries.filter(e=>e.id!==id);
+    }
+  },
+  watch:{
+    timeEntries:{
+      deep:true,
+      handler(v){
+        localStorage.setItem('timeEntries',JSON.stringify(v));
+      }
+    }
+  }
+}).mount('#app');
+</script>
+</body>
+</html>

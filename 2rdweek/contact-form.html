@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact-Form</title>
+</head>
+<body>
+    <header>
+    <h1>Contact Us</h1>
+</header>
+
+<main>
+    <form action="">
+        <label for="name">Name:</label><br>
+        <input id="name" type="text" required minlength="2" placeholder="Enter your name"><br><br>
+        <label for="email">Email:</label><br>
+        <input id="email" type="email" required placeholder="your@gmail.com"><br><br>
+        <label for="phone">Phone:</label><br>
+        <input id="phone" type="tel" required placeholder="060-600-705"><br><br>
+        <label for="subject">Subject:</label><br>
+        <select name="subject" id="subject">
+            <option value="">Select Subject</option>
+            <option value="general">Khmer</option>
+            <option value="support">Math</option>
+            <option value="seal">English</option>
+            <textarea name="message" required rows="5" id="message">message here</textarea><br><br>
+        </select><br><br>
+        <label for="message">Message:</label><br>
+        <label>
+            <input type="checkbox" name="subscribe" value="yes">
+            Subscribe to newsletter
+        </label><br><br>
+        <button type="submit">Create Account</button>
+    </form>
+</main>
+
+<footer>
+    <p>&copy; 2026 Your Website</p>
+</footer>
+</body>
+</html>

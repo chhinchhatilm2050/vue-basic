@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="product.css">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <title>Product-Card</title>
+</head>
+<body class="bg-cyan-400">
+    <header class="bg-red-300 grid sm:grid-cols-3 items-center p-4">
+        <h1 class="text-2xl font-bold sm:text-start text-center">Our Products</h1>
+
+        <input type="text" placeholder="Search by name..." id="search-name" class=" px-4 py-2 border-white rounded-lg border-1">
+        <div class="flex justify-center items-center gap-4 sm:justify-end mt-3 ">
+            <button
+            id="add-product"
+            class="bg-white px-4 py-2 rounded font-medium hover:bg-gray-100 hover:cursor-pointer"
+            >
+            Add New Product
+            </button>
+
+            <div id="product-count" class="font-semibold">
+            Total Products: 0
+            </div>
+        </div>
+    </header>
+    <div class="text-center text-3xl text-red-700 mt-20" id="notfound"></div>
+    <div id="products-container" class="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 grid-cols-1 place-items-center mt-5"></div>
+    <script src="product.js"></script>
+</body>
+</html>

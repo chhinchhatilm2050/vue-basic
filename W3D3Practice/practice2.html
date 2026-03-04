@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Feedback Form UI</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Asap&family=Lobster&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: "Asap", sans-serif;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+  <div id="app" class="bg-white w-full max-w-xl p-6 rounded-xl shadow-lg">
+    <h1 class="text-2xl font-bold text-center mb-6">Feedback Form</h1>
+
+    <!-- Name -->
+    <div class="mb-4">
+      <label class="block text-sm font-medium mb-1">Name</label>
+      <input
+        v-model.trim="feedBackData.userName"
+        @input="validateField('userName')"
+        type="text"
+        placeholder="Enter your name"
+        class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+      />
+      <p v-if="errors.userName" class="text-red-600">{{ errors.userName }}</p>
+    </div>
+
+    <!-- Satisfaction -->
+    <div class="mb-4">
+      <p class="text-sm font-medium mb-2">Satisfaction Level</p>
+      <div class="flex gap-4">
+        <label><input type="radio" v-model="feedBackData.satifites" value="good"> Good</label>
+        <label><input type="radio" v-model="feedBackData.satifites" value="average"> Average</label>
+        <label><input type="radio" v-model="feedBackData.satifites" value="poor"> Poor</label>
+      </div>
+    </div>
+
+    <!-- Features -->
+    <div class="mb-4">
+      <p class="text-sm font-medium mb-2">Features you like</p>
+      <div class="grid grid-cols-2 gap-2">
+        <label><input type="checkbox" v-model="feedBackData.featuure" value="Design"> Design</label>
+        <label><input type="checkbox" v-model="feedBackData.featuure" value="Performance"> Performance</label>
+        <label><input type="checkbox" v-model="feedBackData.featuure" value="Ease of Use"> Ease of Use</label>
+        <label><input type="checkbox" v-model="feedBackData.featuure" value="Price"> Price</label>
+      </div>
+    </div>
+
+    <!-- Comments -->
+    <div class="mb-6">
+      <label class="block text-sm font-medium mb-1">Comments</label>
+      <textarea
+        v-model.trim="feedBackData.comment"
+        @input="validateField('comment')"
+        rows="4"
+        placeholder="Write your comments..."
+        class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+      ></textarea>
+      <p v-if="errors.comment" class="text-red-600">{{ errors.comment }}</p>
+    </div>
+
+    <!-- Button -->
+    <button
+      class="w-full bg-blue-600 text-white py-2 rounded-lg disabled:opacity-50"
+      :disabled="!isFormValidate"
+      @click="submitForm"
+    >
+      Submit
+    </button>
+
+    <!-- Summary -->
+    <div v-if="showSummary" class="mt-6 border-t pt-4">
+      <h2 class="font-semibold mb-2">Summary</h2>
+      <p><b>Name:</b> {{ feedBackData.userName }}</p>
+      <p><b>Satisfaction:</b> {{ feedBackData.satifites }}</p>
+      <p><b>Features:</b> {{ feedBackData.featuure.join(', ') }}</p>
+      <p><b>Comments:</b> {{ feedBackData.comment }}</p>
+    </div>
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+
+    createApp({
+      data() {
+        return {
+          feedBackData: {
+            userName: '',
+            satifites: '',
+            featuure: [],
+            comment: ''
+          },
+          showSummary: false,
+          errors: {}
+        };
+      },
+
+      computed: {
+        isFormValidate() {
+          return (
+            this.feedBackData.userName &&
+            this.feedBackData.satifites &&
+            this.feedBackData.featuure.length > 0 &&
+            this.feedBackData.comment &&
+            Object.keys(this.errors).length === 0
+          );
+        }
+      },
+
+      methods: {
+        validateField(field) {
+          if (field === 'userName') {
+            if (!this.feedBackData.userName) {
+              this.errors.userName = "Username is required";
+            } else if (this.feedBackData.userName.length < 3) {
+              this.errors.userName = "At least 3 characters";
+            } else {
+              delete this.errors.userName;
+            }
+          }
+
+          if (field === 'comment') {
+            if (!this.feedBackData.comment) {
+              this.errors.comment = "Comment is required";
+            } else if (this.feedBackData.comment.length < 13) {
+              this.errors.comment = "At least 13 characters";
+            } else {
+              delete this.errors.comment;
+            }
+          }
+        },
+
+        submitForm() {
+          this.validateField('userName');
+          this.validateField('comment');
+
+          if (this.isFormValidate) {
+            this.showSummary = true;
+            alert('Success!');
+          }
+        }
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>

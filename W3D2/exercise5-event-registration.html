@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Event Registration UI</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Asap&family=Lobster&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.css">
+  <style>
+    body { font-family: "Asap", sans-serif; }
+  </style>
+</head>
+<body class="bg-gray-100 p-6">
+<div id="app" class="max-w-7xl mx-auto">
+
+  <h1 class="text-3xl font-bold mb-6"><i class="ri-file-list-line"></i> Event Registration</h1>
+
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+    <div class="bg-white p-4 rounded shadow">Total Events: <b>{{events.length}}</b></div>
+    <div class="bg-white p-4 rounded shadow">Registered Events: <b>{{registrations.length}}</b></div>
+    <div class="bg-white p-4 rounded shadow">Total Spent: <b>$ {{totalSpent}}</b></div>
+    <div class="bg-white p-4 rounded shadow">Waiting List: <b>{{waitingList.length}}</b></div>
+  </div>
+
+  <div class="bg-white p-4 rounded shadow mb-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+    <select v-model="filters.category" class="border p-2 rounded">
+      <option value="">All Categories</option>
+      <option>Conference</option>
+      <option>Workshop</option>
+      <option>Webinar</option>
+      <option>Social</option>
+    </select>
+
+    <select v-model="filters.status" class="border p-2 rounded">
+      <option value="">All Status</option>
+      <option>Open</option>
+      <option>Closed</option>
+      <option>Full</option>
+    </select>
+
+    <select v-model="filters.price"  class="border p-2 rounded">
+      <option value="">All Prices</option>
+      <option>Free</option>
+      <option>Paid</option>
+    </select>
+
+    <select v-model="sortBy" class="border p-2 rounded">
+      <option value="date">Sort by Date</option>
+      <option value="price">Sort by Price</option>
+      <option value="seats">Sort by Seats</option>
+    </select>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div v-for="event in filteredEvents" :key="event.id">
+      <div class="bg-white p-5 rounded shadow">
+        <h2 class="text-xl font-bold">{{event.name}}</h2>
+        <p class="text-sm text-gray-500">{{event.date}}, {{event.time}}</p>
+        <p>{{event.location}}</p>
+        <p>Category: {{event.category}}</p>
+        <p>Seats Available: {{event.seats}}</p>
+        <p class="font-semibold mt-1">Price: ${{event.price}}</p>
+        <p class="mt-1">Status: <span class="font-bold text-green-600">{{event.status}}</span></p>
+        <div class="mt-4 flex gap-2">
+          <button v-if="event.status==='Full'" @click="openModal(event)" class="px-3 py-1 bg-yellow-600 text-white rounded">
+            Join Waiting List
+          </button>
+          <button v-else @click="openModal(event)" class="px-3 py-1 bg-blue-600 text-white rounded">Register</button>
+          <button @click="openUnregister(event)" class="px-3 py-1 bg-red-500 text-white rounded cursor-pointer">Unregister</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div v-if="selectedEvent" class="fixed inset-0 bg-black/50 flex items-center justify-center">
+    <div class="bg-white p-6 rounded w-full max-w-md mt-8">
+      <h2 class="text-xl font-bold mb-4">Register for Event</h2>
+      <input @input="validateField('name')" v-model="form.name" class="border p-2 w-full rounded" placeholder="Name" />
+      <p v-if="errors.name" class="text-red-600">{{errors.name}}</p>
+      <input @input="validateField('email')" v-model="form.email" class="border p-2 w-full mt-2 rounded" placeholder="Email" />
+      <p v-if="errors.email" class="text-red-600">{{errors.email}}</p>
+      <input @input="validateField('phone')" v-model="form.phone" class="border p-2 w-full mt-2 rounded" placeholder="Phone" />
+      <p v-if="errors.phone" class="text-red-600">{{errors.phone}}</p>
+      <input type="number" v-model="form.tickets" class="border p-2 w-full mt-2 rounded" placeholder="Tickets (Max 5)" />
+      <div class="flex justify-end gap-2 mt-3">
+        <button @click="selectedEvent = null" class="px-3 py-1 bg-red-500 rounded text-black cursor-pointer">Cancel</button>
+        <button
+          :disabled="!isValidForm"
+          @click="register"
+          :class="[ 'px-3 py-1 rounded text-white',
+                     isValidForm ? 'bg-blue-600 cursor-pointer' : 'bg-blue-600 opacity-50 cursor-not-allowed']"
+        >
+          Confirm Registration
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div v-if="unRegisters" class="fixed inset-0 bg-black/50 flex items-center justify-center">
+    <div class="bg-white p-6 rounded w-full max-w-md mt-8">
+      <p>Do you want to unregister from <b>{{ eventToUnregister?.name }}</b>?</p>
+      <div class="text-end mt-3">
+        <button @click="cancelUnregister" class="px-3 py-1 bg-red-500 rounded text-black cursor-pointer me-3">No</button>
+        <button @click="confirmUnregister" class="px-3 py-1 bg-blue-500 rounded text-black cursor-pointer">Yes</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white p-5 rounded shadow mt-8">
+    <h2 class="text-xl font-bold mb-3"><i class="ri-task-line"></i> My Registrations</h2>
+    <ul>
+      <li v-for="reg in registrations" :key="reg.eventId" class="border-b py-2 flex justify-between">
+        <span>{{reg.event}} ({{reg.tickets}} tickets)</span>
+        <span class="text-sm text-gray-500">QR: {{reg.qr}}</span>
+      </li>
+    </ul>
+  </div>
+
+  <div class="bg-white p-5 rounded shadow mt-8">
+    <h2 class="text-xl font-bold mb-3"><i class="ri-task-line"></i> My Waiting List</h2>
+    <ul>
+      <li v-for="reg in waitingList" :key="reg.eventId" class="border-b py-2 flex justify-between">
+        <span>{{reg.event}} ({{reg.tickets}} tickets)</span>
+        <span class="text-sm text-gray-500">QR: {{reg.qr}}</span>
+      </li>
+    </ul>
+  </div>
+
+</div>
+
+<script>
+const { createApp } = Vue;
+createApp({
+  data() {
+    return {
+      sortBy: 'date',
+      filters: { category: '', status: '', price: '' },
+      selectedEvent: null,
+      form: { name: '', email: '', phone: '', tickets: 1 },
+      events: [
+        { id:1, name:'School Conference 2026', date:'10-01-2026', time:'9:00 AM', location:'Online', category:'Conference', seats:45, price:100, status:'Open' },
+        { id:2, name:'Business Workshop', date:'10-02-2026', time:'2:00 PM', location:'Phnom Penh', category:'Workshop', seats:0, price:50, status:'Full' },
+        { id:3, name:'Free Book Fair', date:'10-03-2026', time:'11:00 AM', location:'Online', category:'Webinar', seats:100, price:0, status:'Open' },
+        { id:4, name:'University Conference', date:'10-03-2026', time:'11:00 AM', location:'Siem Reap', category:'Webinar', seats:100, price:50, status:'Open' }
+      ],
+      registrations: [],
+      waitingList: [],
+      errors: {},
+      unRegisters: false,
+      eventToUnregister: null
+    }
+  },
+  computed: {
+    filteredEvents() {
+      let list = [...this.events];
+      if (this.filters.category) list = list.filter(e => e.category === this.filters.category);
+      if (this.filters.status) list = list.filter(e => e.status === this.filters.status);
+      if (this.filters.price) list = list.filter(e => this.filters.price === 'Free' ? e.price===0 : e.price>0);
+      if (this.sortBy === 'price') list.sort((a,b)=>a.price-b.price);
+      else if(this.sortBy==='seats') list.sort((a,b)=>b.seats-a.seats);
+      else list.sort((a,b)=>new Date(a.date)-new Date(b.date));
+      return list;
+    },
+    totalSpent() {
+      return this.registrations.reduce((sum,r)=>sum+r.total,0)
+    },
+    isValidForm() {
+      return this.form.name && this.form.email && this.form.phone && this.form.tickets && Object.keys(this.errors).length===0;
+    }
+  },
+  methods: {
+    validateField(field) {
+      switch(field){
+        case 'name':
+          if(!this.form.name) this.errors.name='Name is required';
+          else if(this.form.name.length<3) this.errors.name='Name must be 3+ chars';
+          else delete this.errors.name;
+          break;
+        case 'email':
+          const emailRegex=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if(!this.form.email) this.errors.email='Email required';
+          else if(!emailRegex.test(this.form.email)) this.errors.email='Invalid email';
+          else delete this.errors.email;
+          break;
+        case 'phone':
+          if(!this.form.phone) this.errors.phone='Phone required';
+          else if(this.form.phone.length<9||this.form.phone.length>10) this.errors.phone='Phone must be 9-10 digits';
+          else delete this.errors.phone;
+          break;
+      }
+    },
+    openModal(event){
+      this.selectedEvent = event;
+      this.form.tickets = 1;
+    },
+    register(){
+      if(this.selectedEvent.seats>=this.form.tickets){
+        this.selectedEvent.seats -= this.form.tickets;
+        if(this.selectedEvent.seats===0) this.selectedEvent.status='Full';
+        this.registrations.push({
+          eventId:this.selectedEvent.id,
+          event:this.selectedEvent.name,
+          tickets:this.form.tickets,
+          total:this.selectedEvent.price*this.form.tickets,
+          qr: Math.random().toString(36).substring(2,8)
+        });
+      } else {
+        this.waitingList.push({
+          eventId:this.selectedEvent.id,
+          event:this.selectedEvent.name,
+          tickets:this.form.tickets,
+          qr: Math.random().toString(36).substring(2,8)
+        });
+      }
+      this.selectedEvent=null;
+      this.clearForm();
+    },
+    clearForm(){
+      this.form={name:'', email:'', phone:'', tickets:1};
+      this.errors={};
+    },
+    openUnregister(event){
+      this.eventToUnregister=event;
+      this.unRegisters=true;
+    },
+    cancelUnregister(){
+      this.eventToUnregister=null;
+      this.unRegisters=false;
+    },
+    confirmUnregister(){
+      if(!this.eventToUnregister) return;
+      const index=this.registrations.findIndex(r=>r.eventId===this.eventToUnregister.id);
+      if(index!==-1){
+        this.eventToUnregister.seats += this.registrations[index].tickets;
+        this.eventToUnregister.status='Open';
+        this.registrations.splice(index,1);
+      }
+      this.eventToUnregister=null;
+      this.unRegisters=false;
+    }
+  }
+}).mount('#app');
+</script>
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Image Gallery Modal</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-[#4f2704]">
+
+<section class="max-w-6xl mx-auto p-6">
+  <h2 class="text-3xl font-bold mb-6 text-center text-white ">Coffee Gallery</h2>
+  <div id="gallery" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+    <img src="./img/gallery1.jpg" data-caption="coffee" class="thumb w-[300px] h-[400px] rounded-md transform hover:-translate-y-2 duration-700 shadow-2xl" />
+    <img src="./img/gallery2.jpg" data-caption="coffee" class="thumb w-[300px] h-[400px] rounded-md transform hover:-translate-y-2 duration-700 shadow-2xl" />
+    <img src="./img/gallery3.jpg" data-caption="coffee" class="thumb w-[300px] h-[400px] rounded-md transform hover:-translate-y-2 duration-700 shadow-2xl" />
+    <img src="./img/gallery4.jpg" data-caption="coffee" class="thumb w-[300px] h-[400px] rounded-md transform hover:-translate-y-2 duration-700 shadow-2xl" />
+    <img src="./img/gallery5.jpg" data-caption="coffee" class="thumb w-[300px] h-[400px] rounded-md transform hover:-translate-y-2 duration-700 shadow-2xl" />
+    <img src="./img/gallery6.jpg" data-caption="coffee" class="thumb w-[300px] h-[400px] rounded-md transform hover:-translate-y-2 duration-700 shadow-2xl" />
+    <img src="./img/gallery5.jpg" data-caption="coffee" class="thumb w-[300px] h-[400px] rounded-md transform hover:-translate-y-2 duration-700 shadow-2xl" />
+    <img src="./img/gallery6.jpg" data-caption="coffee" class="thumb w-[300px] h-[400px] rounded-md transform hover:-translate-y-2 duration-700 shadow-2xl" />
+</div>
+</section>
+
+<div id="modal" class="fixed inset-0 bg-[#3c1e03b8] hidden items-center justify-center z-50">
+  
+  <div id="overlay" class="absolute inset-0"></div>
+
+  <div class="relative max-w-4xl w-full px-4 animate-fade">
+    
+    <button id="closeBtn" class="absolute -top-5 right-40 text-white text-3xl hover:scale-110 transition">
+      ✕
+    </button>
+
+    <img id="modalImg" src="" alt=""
+      class="mx-auto max-h-[80vh] rounded-lg shadow-lg transition duration-300" />
+
+
+    <p id="caption" class="text-center text-white text-xl font-bold mt-4"></p>
+
+
+    <p id="counter" class="text-center text-gray-300 text-sm mt-1"></p>
+
+
+    <button id="prevBtn"
+      class="absolute left-40 top-1/2 -translate-y-1/2 font-bold text-white text-4xl hover:scale-125 transition">
+      <
+    </button>
+
+    <button id="nextBtn"
+      class="absolute right-40 top-1/2 -translate-y-1/2 text-white font-bold text-4xl hover:scale-125 transition">
+      >
+    </button>
+  </div>
+</div>
+<script>
+  const thumbnails = document.querySelectorAll('.thumb');
+  const modal = document.getElementById('modal');
+  const modalImg = document.getElementById('modalImg');
+  const caption = document.getElementById('caption');
+  const counter = document.getElementById('counter');
+  const closeBtn = document.getElementById('closeBtn');
+  const overlay = document.getElementById('overlay');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  
+  let currentIndex = 0;
+  const images = [...thumbnails];
+
+  function openModal(index) {
+    currentIndex = index;
+    updateModal();
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    document.body.classList.add('overflow-hidden');
+  }
+
+  function closeModal() {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    document.body.classList.remove('overflow-hidden');
+  }
+
+  function updateModal() {
+    modalImg.src = images[currentIndex].src;
+    caption.textContent = images[currentIndex].dataset.caption;
+    counter.textContent = `${currentIndex + 1} of ${images.length}`;
+  }
+
+  function prevImage() {
+    currentIndex = (currentIndex - 1 + images.length) % images.length;
+    updateModal();
+  }
+
+  function nextImage() {
+    currentIndex = (currentIndex + 1) % images.length;
+    updateModal();
+  }
+
+  thumbnails.forEach((img, index) => {
+    img.addEventListener('click', () => openModal(index));
+  });
+
+  closeBtn.addEventListener('click', closeModal);
+  overlay.addEventListener('click', closeModal);
+  prevBtn.addEventListener('click', prevImage);
+  nextBtn.addEventListener('click', nextImage);
+
+  document.addEventListener('keydown', (e) => {
+    if (modal.classList.contains('hidden')) return;
+    if (e.key === 'Escape') closeModal();
+    if (e.key === 'ArrowLeft') prevImage();
+    if (e.key === 'ArrowRight') nextImage();
+  });
+</script>
+
+</body>
+</html>

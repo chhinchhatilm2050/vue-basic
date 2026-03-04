@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>practice</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+
+<body>
+  <div id="app">
+    <div>this is count {{conts}}</div>
+    <button @click="conts++">click count</button>
+
+    <example
+      @count-change="onCountChange"
+      :title="title"
+      :author="author"
+      :published-date="publishedDate"
+      :conts= "conts"
+    />
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+
+    const app = createApp({
+      data() {
+        return {
+          title: 'Tori',
+          author: 'Chhin Chhat',
+          publishedDate: '10-08-2005',
+          conts: 0
+        }
+      },
+      methods: {
+        onCountChange(value) {
+            this.conts = value;
+        }
+      }
+    });
+
+    app.component('example', {
+      props: {
+        title: String,
+        author: String,
+        publishedDate: String,
+        conts: Number
+      },
+      template: `
+        <div>
+          <h2>{{ title }}</h2>
+          <p>{{ author }} on {{ publishedDate }}</p>
+          <button @click="increasCount">Clicked {{ count }} times</button>
+          <p>count reduct{{conts}}</p>
+        </div>
+      `,
+      data() {
+        return {
+            count: 0,
+        }
+      },
+      methods: {
+        increasCount() {
+            this.count++;
+            this.$emit('count-change', this.count);
+
+        }
+      }
+    });
+
+    app.mount('#app');
+  </script>
+</body>
+</html>

@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vue Admin Dashboard Demo</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+
+<div id="app" class="flex h-screen">
+
+  <!-- Sidebar Navigation -->
+  <sidebar-nav :menu-items="menuItems" v-model:collapsed="sidebarCollapsed"></sidebar-nav>
+
+  <div class="flex-1 flex flex-col">
+
+    <!-- Dashboard Header -->
+    <dash-header :user="currentUser" :notifications="notifications"></dash-header>
+
+    <!-- Main Content -->
+    <main class="p-4 flex-1 overflow-auto space-y-4">
+      
+      <!-- Stat Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <stat-card v-for="stat in stats" :key="stat.title" v-bind="stat"></stat-card>
+      </div>
+
+      <!-- Charts -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <chart-card v-for="chart in charts" :key="chart.title" v-bind="chart"></chart-card>
+      </div>
+
+      <!-- Data Table -->
+      <data-table :columns="tableColumns" :rows="tableRows"></data-table>
+
+      <!-- Activity Feed and Quick Actions -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <activity-feed :activities="activities"></activity-feed>
+        <quick-actions :actions="quickActions"></quick-actions>
+        <user-list-card :users="users"></user-list-card>
+      </div>
+
+    </main>
+  </div>
+
+</div>
+
+<script>
+const { createApp, ref, reactive, computed } = Vue;
+
+createApp({
+  setup() {
+
+    const currentUser = ref({ name: "Admin", avatar: "" });
+    const notifications = ref(3);
+    const sidebarCollapsed = ref(false);
+
+    const menuItems = reactive([
+      { label: "Dashboard", icon:"🏠", route:"/dashboard" },
+      { label: "Users", icon:"👥", route:"/users" },
+      { label: "Analytics", icon:"📊", route:"/analytics" },
+      { label: "Settings", icon:"⚙️", route:"/settings" }
+    ]);
+
+    const stats = reactive([
+      { title:"Total Users", value:1200, change:5, icon:"👥", color:"blue" },
+      { title:"Sales", value:"$25k", change:-2, icon:"💰", color:"green" },
+      { title:"Visits", value:"8.5k", change:12, icon:"📈", color:"yellow" },
+      { title:"Feedback", value:"320", change:3, icon:"✉️", color:"red" },
+    ]);
+
+    const charts = reactive([
+      { title:"Sales Chart", chartData:[50,70,30,90,60], chartType:"bar" },
+      { title:"Users Growth", chartData:[10,20,15,25,30], chartType:"bar" },
+    ]);
+
+    const tableColumns = ["Name","Email","Role","Status","Actions"];
+    const tableRows = reactive([
+      { id:1, name:"Alice", email:"alice@example.com", role:"Admin", status:"Active" },
+      { id:2, name:"Bob", email:"bob@example.com", role:"Editor", status:"Inactive" },
+      { id:3, name:"Charlie", email:"charlie@example.com", role:"User", status:"Active" },
+    ]);
+
+    const activities = reactive([
+      { id:1, user:"Alice", action:"updated a post", time:"10 min ago", type:"edit", avatar:"" },
+      { id:2, user:"Bob", action:"added a new user", time:"30 min ago", type:"add", avatar:"" },
+      { id:3, user:"Charlie", action:"deleted a comment", time:"1 hr ago", type:"delete", avatar:"" },
+    ]);
+
+    const quickActions = reactive([
+      { label:"Add User", icon:"➕" },
+      { label:"Generate Report", icon:"📄" },
+      { label:"Upload Data", icon:"⬆️" },
+      { label:"Settings", icon:"⚙️" },
+    ]);
+
+    const users = reactive([
+      { id:1, name:"Alice", avatar:"", online:true, role:"Admin" },
+      { id:2, name:"Bob", avatar:"", online:false, role:"Editor" },
+      { id:3, name:"Charlie", avatar:"", online:true, role:"User" },
+    ]);
+
+    return { currentUser, notifications, menuItems, sidebarCollapsed, stats, charts, tableColumns, tableRows, activities, quickActions, users };
+  },
+
+  components: {
+
+    // Dashboard Header
+    'dash-header': {
+      props:['user','notifications'],
+      template: `
+        <header class="bg-white shadow p-4 flex justify-between items-center">
+          <div class="flex items-center gap-4">
+            <span class="font-bold text-xl">Admin Dashboard</span>
+            <input type="text" placeholder="Search..." class="border rounded px-2 py-1">
+          </div>
+          <div class="flex items-center gap-4">
+            <button class="relative">
+              🔔
+              <span v-if="notifications>0" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1">{{ notifications }}</span>
+            </button>
+            <button>⚙️</button>
+            <div class="flex items-center gap-2 cursor-pointer">
+              <div class="w-8 h-8 bg-gray-300 rounded-full"></div>
+              <span>{{ user.name }}</span>
+            </div>
+          </div>
+        </header>
+      `
+    },
+
+    // Sidebar Navigation
+    'sidebar-nav': {
+      props:['menuItems','collapsed'],
+      emits:['update:collapsed'],
+      template: `
+        <aside :class="['bg-white shadow p-2 flex flex-col transition-all duration-300', collapsed ? 'w-16':'w-64']">
+          <button @click="$emit('update:collapsed', !collapsed)" class="mb-2">☰</button>
+          <div v-for="item in menuItems" :key="item.label" class="flex items-center gap-2 p-2 hover:bg-gray-100 cursor-pointer rounded">
+            <span>{{ item.icon }}</span>
+            <span v-if="!collapsed">{{ item.label }}</span>
+          </div>
+        </aside>
+      `
+    },
+
+    // Stat Card
+    'stat-card': {
+      props:['title','value','change','icon','color'],
+      template: `
+        <div :class="'p-4 rounded shadow flex justify-between items-center border-l-4 border-'+color+'-500'">
+          <div>
+            <p class="text-gray-500">{{ title }}</p>
+            <p class="font-bold text-xl">{{ value }}</p>
+          </div>
+          <div class="flex flex-col items-end">
+            <span>{{ icon }}</span>
+            <span :class="change>=0?'text-green-500':'text-red-500'">
+              <template v-if="change>=0">▲ {{ change }}%</template>
+              <template v-else>▼ {{ Math.abs(change) }}%</template>
+            </span>
+          </div>
+        </div>
+      `
+    },
+
+    // Data Table
+    'data-table': {
+      props:['columns','rows'],
+      template: `
+        <div class="bg-white shadow rounded overflow-x-auto">
+          <table class="min-w-full">
+            <thead class="bg-gray-50">
+              <tr>
+                <th><input type="checkbox"></th>
+                <th v-for="col in columns" :key="col" class="p-2 text-left">{{ col }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="row in rows" :key="row.id" class="border-b hover:bg-gray-50">
+                <td><input type="checkbox"></td>
+                <td>{{ row.name }}</td>
+                <td>{{ row.email }}</td>
+                <td>{{ row.role }}</td>
+                <td>{{ row.status }}</td>
+                <td>
+                  <button class="text-blue-500 text-sm">Edit</button>
+                  <button class="text-red-500 text-sm ml-2">Delete</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `
+    },
+
+    // Chart Card
+    'chart-card': {
+      props:['title','chartData','chartType'],
+      template: `
+        <div class="bg-white shadow rounded p-4">
+          <div class="flex justify-between items-center mb-2">
+            <h3 class="font-bold">{{ title }}</h3>
+            <div class="flex gap-2">
+              <button class="px-2 py-1 bg-gray-200 rounded">Refresh</button>
+              <button class="px-2 py-1 bg-gray-200 rounded">Export</button>
+            </div>
+          </div>
+          <div class="w-full h-32 flex items-end gap-2">
+            <div v-for="val in chartData" :key="val" class="bg-blue-500 w-6" :style="{height: val+'%'}"></div>
+          </div>
+        </div>
+      `
+    },
+
+    // Activity Feed
+    'activity-feed': {
+      props:['activities'],
+      template: `
+        <div class="bg-white shadow rounded p-4">
+          <h3 class="font-bold mb-2">Activity Feed</h3>
+          <div v-for="act in activities" :key="act.id" class="flex items-center gap-2 border-b py-1">
+            <div class="w-8 h-8 bg-gray-300 rounded-full"></div>
+            <div class="flex-1 text-sm">
+              <span class="font-semibold">{{ act.user }}</span> {{ act.action }}
+              <div class="text-gray-500 text-xs">{{ act.time }}</div>
+            </div>
+          </div>
+          <button class="mt-2 text-blue-500 text-sm">Load more</button>
+        </div>
+      `
+    },
+
+    // Quick Actions
+    'quick-actions': {
+      props:['actions'],
+      template: `
+        <div class="bg-white shadow rounded p-4 grid grid-cols-2 gap-2">
+          <button v-for="act in actions" :key="act.label" class="p-2 bg-gray-100 rounded flex items-center gap-2 justify-center hover:bg-gray-200">
+            <span>{{ act.icon }}</span>
+            <span class="text-sm">{{ act.label }}</span>
+          </button>
+        </div>
+      `
+    },
+
+    // User List Card
+    'user-list-card': {
+      props:['users'],
+      template: `
+        <div class="bg-white shadow rounded p-4">
+          <h3 class="font-bold mb-2">Users</h3>
+          <div v-for="user in users" :key="user.id" class="flex items-center justify-between gap-2 border-b py-1">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-full bg-gray-300 relative">
+                <span v-if="user.online" class="absolute bottom-0 right-0 w-2 h-2 bg-green-500 rounded-full border border-white"></span>
+              </div>
+              <span>{{ user.name }}</span>
+              <span class="bg-gray-200 px-1 rounded text-xs">{{ user.role }}</span>
+            </div>
+            <div class="flex gap-1">
+              <button class="text-blue-500 text-sm">Message</button>
+              <button class="text-green-500 text-sm">Call</button>
+            </div>
+          </div>
+        </div>
+      `
+    }
+
+  }
+}).mount('#app');
+</script>
+
+</body>
+</html>

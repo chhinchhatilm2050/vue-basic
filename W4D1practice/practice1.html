@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Vue Blog Post with Comments</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Vue 3 -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen p-10">
+
+<div id="app" class="max-w-4xl mx-auto">
+  <!-- Blog Post Component -->
+  <blog-post
+    title="My First Blog Post"
+    content="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque non lacus vel dolor commodo scelerisque."
+    author="Tori"
+    date="Feb 3, 2026"
+    :comments="comments"
+  ></blog-post>
+</div>
+
+<script>
+const app = Vue.createApp({
+  data() {
+    return {
+      comments: [
+        { username: "Alice", message: "Great post! Really enjoyed it.", timestamp: "2 hours ago" },
+        { username: "Bob", message: "Thanks for sharing this information.", timestamp: "1 hour ago" },
+        { username: "Charlie", message: "Looking forward to your next post!", timestamp: "30 minutes ago" }
+      ]
+    }
+  }
+});
+
+// Comment Component
+app.component("comment-item", {
+  props: {
+    username: { type: String, required: true },
+    message: { type: String, required: true },
+    timestamp: { type: String, required: true }
+  },
+  template: `
+    <div class="bg-white rounded-md shadow-sm p-4 mb-3">
+      <div class="flex justify-between items-center mb-1">
+        <span class="font-semibold">{{ username }}</span>
+        <span class="text-gray-400 text-sm">{{ timestamp }}</span>
+      </div>
+      <p class="text-gray-700">{{ message }}</p>
+    </div>
+  `
+});
+
+// Blog Post Component
+app.component("blog-post", {
+  props: {
+    title: { type: String, required: true },
+    content: { type: String, required: true },
+    author: { type: String, required: true },
+    date: { type: String, required: true },
+    comments: { type: Array, default: () => [] }
+  },
+  template: `
+    <div class="bg-white rounded-xl shadow-md p-6">
+      <h1 class="text-2xl font-bold mb-2">{{ title }}</h1>
+      <div class="text-gray-500 mb-4">By {{ author }} • {{ date }}</div>
+      <p class="text-gray-700 mb-6">{{ content }}</p>
+
+      <h2 class="text-xl font-semibold mb-3">Comments ({{ comments.length }})</h2>
+      <comment-item
+        v-for="(comment, index) in comments"
+        :key="index"
+        :username="comment.username"
+        :message="comment.message"
+        :timestamp="comment.timestamp"
+      ></comment-item>
+    </div>
+  `
+});
+
+app.mount("#app");
+</script>
+
+</body>
+</html>

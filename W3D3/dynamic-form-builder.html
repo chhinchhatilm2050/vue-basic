@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Form Builder</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Asap&family=Lobster&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.css">
+  <style>
+    body {
+      font-family: "Asap", sans-serif;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-100 p-6">
+
+<div id="app" class="max-w-6xl mx-auto bg-white p-6 rounded shadow">
+
+  <h1 class="text-2xl text-center text-white font-bold mb-4 bg-blue-400 p-10 rounded-2xl">Form Builder</h1>
+  <div class="flex gap-3 mb-6 justify-between">
+    <div class="">
+      <p>If you want to add field pleses click button add field</p>
+    </div>
+    <div>
+      <button @click="mode='edit'"
+        class="px-4 py-2 rounded-xl me-5"
+        :class="mode==='edit' ? 'bg-blue-500 text-white' : 'bg-gray-200'"><i class="ri-edit-2-line"></i>
+        Edit
+      </button>
+  
+      <button @click="mode='preview'"
+        class="px-4 py-2 rounded-xl"
+        :class="mode==='preview' ? 'bg-blue-500 text-white' : 'bg-gray-200'"><i class="ri-eye-line"></i>
+        Preview
+      </button>
+
+    </div>
+  </div>
+
+  <div v-if="mode==='edit'" class="grid grid-cols-2 gap-6">
+
+    <div>
+      <button @click="addField"
+        class="mb-4 bg-blue-500 text-white px-4 py-2 rounded-xl w-full">
+       <i class="ri-add-circle-line"></i> Add Field
+      </button>
+
+      <div v-for="(f,i) in fields" :key="f.id"
+        class="border p-3 mb-3 rounded">
+
+        <input v-model="f.label" placeholder="Label"
+          class="w-full border p-2 mb-2 rounded">
+
+        <input v-model="f.placeholder" placeholder="Placeholder"
+          class="w-full border p-2 mb-2 rounded">
+
+        <select v-model="f.type"
+          class="w-full border p-2 mb-2 rounded">
+          <option v-for="t in types" :key="t">{{ t }}</option>
+        </select>
+
+        <input v-model="f.default" placeholder="Default value"
+          class="w-full border p-2 mb-2 rounded">
+
+        <label class="flex items-center gap-2 mb-2">
+          <input type="checkbox" v-model="f.required"> Required
+        </label>
+
+        <div v-if="['text','number'].includes(f.type)"
+          class="flex gap-2 mb-2">
+          <input v-model="f.min" placeholder="Min"
+            class="w-full border p-2 rounded">
+          <input v-model="f.max" placeholder="Max"
+            class="w-full border p-2 rounded">
+        </div>
+
+        <div class="flex gap-2">
+          <button @click="moveUp(i)" class="px-2 py-1 bg-gray-200 text-gray-600 rounded"><i class="ri-arrow-up-fill"></i></button>
+          <button @click="moveDown(i)" class="px-2 py-1 bg-gray-200 text-gray-600 rounded"><i class="ri-arrow-down-fill"></i></button>
+          <button @click="duplicate(i)" class="px-2 py-1 bg-blue-500 text-white rounded"><i class="ri-file-copy-line"></i> Duplicate</button>
+          <button @click="remove(i)" class="px-2 py-1 bg-red-500 text-white rounded"><i class="ri-delete-bin-6-line"></i> Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <h3 class="font-semibold mb-2">Form Structure (JSON)</h3>
+      <pre class="bg-gray-100 p-3 rounded-xl text-sm overflow-auto">
+      {{ fields }}
+      </pre>
+    </div>
+
+  </div>
+
+  <div v-if="mode==='preview'">
+    <form @submit.prevent="submit" class="space-y-4">
+      <div v-for="f in fields" :key="f.id">
+        <label class="block font-semibold mb-1">{{ f.label }}</label>
+        <input v-if="['text','email','number','date'].includes(f.type)"
+          :type="f.type"
+          v-model="formData[f.id]"
+          :required="f.required"
+          :min="f.min"
+          :max="f.max"
+          :placeholder="f.placeholder"
+          class="w-full border p-2 rounded">
+
+        <textarea v-if="f.type==='textarea'"
+          v-model="formData[f.id]"
+          class="w-full border p-2 rounded">
+        </textarea>
+
+        <select v-if="f.type==='select'"
+          v-model="formData[f.id]"
+          class="w-full border p-2 rounded">
+          <option disabled value="">Select</option>
+          <option>A</option>
+          <option>B</option>
+        </select>
+
+        <div v-if="f.type==='checkbox'" class="flex items-center gap-2">
+          <input type="checkbox" v-model="formData[f.id]"> Check
+        </div>
+
+        <div v-if="f.type==='radio'" class="flex gap-4">
+          <label><input type="radio" :name="f.id" value="A" v-model="formData[f.id]"> A</label>
+          <label><input type="radio" :name="f.id" value="B" v-model="formData[f.id]"> B</label>
+        </div>
+      </div>
+
+      <div class="flex gap-3">
+        <button class="bg-blue-600 text-white px-4 py-2 rounded-xl">
+          Submit
+        </button>
+        <button type="button" @click="clear"
+          class="bg-red-500 text-white px-4 py-2 rounded-xl">
+          Clear
+        </button>
+      </div>
+
+    </form>
+
+    <h3 class="font-semibold mt-6">Submitted Data</h3>
+    <pre class="bg-gray-100 p-3 rounded-xl">
+    {{ submitted }}
+    </pre>
+
+  </div>
+
+</div>
+
+<script>
+const { createApp } = Vue
+
+createApp({
+  data() {
+    return {
+      mode: 'edit',
+      types: ['text','email','number','textarea','select','radio','checkbox','date'],
+      fields: [],
+      formData: {},
+      submitted: null
+    }
+  },
+  methods: {
+    addField() {
+      this.fields.push({
+        id: Date.now(),
+        type: 'text',
+        label: '',
+        placeholder: '',
+        required: false,
+        min: '',
+        max: '',
+        default: ''
+      })
+    },
+    remove(i) { this.fields.splice(i,1) },
+    duplicate(i) {
+      this.fields.splice(i+1,0,{...this.fields[i], id: Date.now()})
+    },
+    moveUp(i) {
+      if(i>0) [this.fields[i-1],this.fields[i]]=[this.fields[i],this.fields[i-1]]
+    },
+    moveDown(i) {
+      if(i<this.fields.length-1) [this.fields[i+1],this.fields[i]]=[this.fields[i],this.fields[i+1]]
+    },
+    submit() { this.submitted = {...this.formData} },
+    clear() { this.formData={}; this.submitted=null }
+  }
+}).mount('#app')
+</script>
+
+</body>
+</html>

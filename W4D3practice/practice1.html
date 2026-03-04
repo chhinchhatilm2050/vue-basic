@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Card Component with Slots</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 p-8">
+  <div id="app">
+    <div class="max-w-6xl mx-auto">
+      <h1 class="text-4xl font-bold text-gray-800 mb-8">
+        Card Component Examples (Vue Slots)
+      </h1>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+        <!-- Card 1: All slots -->
+        <card>
+          <template #header>
+            <h3 class="text-xl font-bold text-gray-800">Product Card</h3>
+          </template>
+
+          <img
+            src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400"
+            class="w-full h-48 object-cover mb-4 rounded"
+          />
+          <p class="text-gray-700">
+            Premium wireless headphones with noise cancellation.
+          </p>
+          <p class="text-2xl font-bold text-blue-600 mt-2">
+            $199.99
+          </p>
+
+          <template #footer>
+            <button
+              class="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition"
+            >
+              Add to Cart
+            </button>
+          </template>
+        </card>
+
+        <!-- Card 2: No footer (fallback) -->
+        <card>
+          <template #header>
+            <h3 class="text-xl font-bold text-gray-800">🎯 Achievement</h3>
+          </template>
+
+          <div class="text-center py-4">
+            <div class="text-6xl mb-2">🏆</div>
+            <p class="text-lg font-semibold text-gray-800">Level Up!</p>
+            <p class="text-gray-600">You've reached level 25</p>
+          </div>
+        </card>
+
+        <!-- Card 3: Notification -->
+        <card>
+          <template #header>
+            <div class="flex items-center justify-between">
+              <h3 class="text-xl font-bold text-gray-800">Notification</h3>
+              <span
+                class="bg-red-500 text-white text-xs px-2 py-1 rounded-full"
+              >
+                New
+              </span>
+            </div>
+          </template>
+
+          <p class="text-gray-700">
+            You have 3 new messages waiting for you.
+          </p>
+
+          <template #footer>
+            <div class="flex gap-2">
+              <button
+                class="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded hover:bg-gray-300 transition"
+              >
+                Dismiss
+              </button>
+              <button
+                class="flex-1 bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition"
+              >
+                View
+              </button>
+            </div>
+          </template>
+        </card>
+
+        <!-- Card 4: Stats -->
+        <card>
+          <template #header>
+            <h3 class="text-xl font-bold text-gray-800">📊 Statistics</h3>
+          </template>
+
+          <div class="space-y-3">
+            <div class="flex justify-between">
+              <span class="text-gray-600">Total Users:</span>
+              <span class="font-bold text-gray-800">12,458</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600">Revenue:</span>
+              <span class="font-bold text-green-600">$45,290</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600">Growth:</span>
+              <span class="font-bold text-blue-600">+23%</span>
+            </div>
+          </div>
+        </card>
+
+        <!-- Card 5: Profile -->
+        <card>
+          <template #header>
+            <div class="text-center">
+              <div
+                class="w-20 h-20 rounded-full bg-purple-500 mx-auto flex items-center justify-center text-white text-3xl font-bold mb-2"
+              >
+                JD
+              </div>
+            </div>
+          </template>
+
+          <div class="text-center">
+            <h3 class="font-bold text-gray-800 text-lg">John Doe</h3>
+            <p class="text-gray-600 text-sm">Software Engineer</p>
+            <p class="text-gray-500 text-xs mt-2">San Francisco, CA</p>
+          </div>
+
+          <template #footer>
+            <div class="flex gap-2">
+              <button
+                class="flex-1 bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition"
+              >
+                Follow
+              </button>
+              <button
+                class="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded hover:bg-gray-300 transition"
+              >
+                Message
+              </button>
+            </div>
+          </template>
+        </card>
+
+        <!-- Card 6: Only default slot -->
+        <card>
+          <div class="text-center py-8">
+            <p class="text-gray-600 italic">
+              This card only uses the default slot
+            </p>
+            <p class="text-gray-500 text-sm mt-2">
+              No header or footer
+            </p>
+          </div>
+        </card>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+
+    const app = createApp({});
+
+    app.component("card", {
+      template: `
+        <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition">
+
+          <!-- Header slot -->
+          <div  class="border-b px-4 py-3 bg-gray-50">
+            <slot name="header"><p>Chhat</p></slot>
+          </div>
+
+          <!-- Body slot -->
+          <div class="p-4">
+            <slot></slot>
+          </div>
+
+          <!-- Footer slot with fallback -->
+          <div class="border-t px-4 py-3 bg-gray-50">
+            <slot name="footer">
+              <p class="text-center text-sm text-gray-400">
+                No actions available
+              </p>
+            </slot>
+          </div>
+
+        </div>
+      `
+    });
+
+    app.mount("#app");
+  </script>
+</body>
+</html>

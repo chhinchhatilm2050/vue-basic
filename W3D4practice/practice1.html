@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Asap&family=Lobster&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: "Asap", sans-serif;
+            background-color: #f0f4f8;
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="min-h-screen flex flex-col items-center justify-center p-4">
+        <!-- Title -->
+        <h1 class="text-2xl font-bold mb-6">Live Search Example</h1>
+
+        <!-- Search Box -->
+        <div class="w-full max-w-md mb-4">
+            <input 
+                v-model="searchQuery"
+                type="text" 
+                placeholder="Type to search..." 
+                class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+        </div>
+
+        <!-- Loading indicator -->
+        <div v-if="isSearching" class="text-gray-500 mb-4">Searching...</div>
+
+        <!-- Search Results -->
+        <div class="w-full max-w-md">
+            <ul class="bg-white rounded shadow divide-y divide-gray-200">
+                <li v-for="(result, index) in searchResults" :key="index" class="p-3 hover:bg-gray-100">
+                    {{ result }}
+                </li>
+                <li v-if="!searchResults.length && !isSearching" class="p-3 text-gray-400">No results found</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    searchQuery: '',
+                    searchResults: [],
+                    isSearching: false,
+                    debounceTimer: null
+                }
+            },
+            watch: {
+                searchQuery(newQuery) {
+                    debugger;
+                    this.isSearching = true;
+                    clearTimeout(this.debounceTimer);
+
+                    // Wait 500ms after user stops typing
+                    this.debounceTimer = setTimeout(() => {
+                        this.performSearch(newQuery);
+                    }, 500);
+                }
+            },
+            methods: {
+                async performSearch(query) {
+                    debugger;
+                    if (!query) {
+                        this.searchResults = [];
+                        this.isSearching = false;
+                        return;
+                    }
+
+                    // Simulate API call with 1 second delay
+                    setTimeout(() => {
+                        this.searchResults = [
+                            `Result for "${query}"`,
+                            `Another result for "${query}"`,
+                            `More results matching "${query}"`
+                        ];
+                        this.isSearching = false;
+                    }, 1000);
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

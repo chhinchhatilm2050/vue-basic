@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Student Grade Calculator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Vue 3 -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 p-6">
+<div id="app" class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+  <!-- STUDENT INFO -->
+  <div class="bg-white p-4 rounded shadow">
+    <h2 class="text-xl font-bold mb-3">Student Information</h2>
+
+    <input v-model="student.name" placeholder="Student Name"
+      class="border p-2 w-full mb-2" />
+
+    <input v-model="student.id" placeholder="Student ID"
+      class="border p-2 w-full mb-2" />
+
+    <label class="block text-sm mt-2">Midterm Exam</label>
+    <input type="number" v-model.number="student.midterm" min="0" max="100"
+      class="border p-2 w-full" />
+
+    <label class="block text-sm mt-2">Final Exam</label>
+    <input type="number" v-model.number="student.final" min="0" max="100"
+      class="border p-2 w-full" />
+
+    <label class="block text-sm mt-2">Attendance (%)</label>
+    <input type="number" v-model.number="student.attendance" min="0" max="100"
+      class="border p-2 w-full" />
+  </div>
+
+  <!-- ASSIGNMENTS -->
+  <div class="bg-white p-4 rounded shadow">
+    <h2 class="text-xl font-bold mb-3">Assignments</h2>
+
+    <div class="flex gap-2 mb-3">
+      <input type="number" v-model.number="newAssignment"
+        min="0" max="100" placeholder="Score"
+        class="border p-2 flex-1" />
+      <button @click="addAssignment(newAssignment)"
+        class="bg-blue-500 text-white px-3 rounded">
+        Add
+      </button>
+    </div>
+
+    <div v-for="(score, index) in student.assignments"
+      :key="index"
+      class="flex items-center gap-2 mb-2">
+      <input type="number" min="0" max="100"
+        v-model.number="student.assignments[index]"
+        @change="updateAssignment(index, student.assignments[index])"
+        class="border p-1 w-20" />
+      <button @click="removeAssignment(index)"
+        class="text-red-500 text-sm">
+        Remove
+      </button>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="bg-white p-4 rounded shadow">
+    <h2 class="text-xl font-bold mb-3">Grade Summary</h2>
+
+    <p><strong>Total Score:</strong> {{ totalScore.toFixed(2) }}</p>
+    <p><strong>Letter Grade:</strong> {{ letterGrade }}</p>
+    <p><strong>Status:</strong> {{ gradeStatus }}</p>
+    <p><strong>Passing:</strong> {{ isPassing ? 'Yes' : 'No' }}</p>
+
+    <hr class="my-3">
+
+    <p>Assignment Avg: {{ averageAssignmentScore.toFixed(2) }}</p>
+    <p>Lowest Assignment: {{ lowestAssignment }}</p>
+    <p>Highest Assignment: {{ highestAssignment }}</p>
+    <p>Missed Assignments: {{ missedAssignments }}</p>
+    <p>Perfect Scores: {{ perfectScores }}</p>
+
+    <hr class="my-3">
+
+    <label class="block text-sm">What-If Final Exam</label>
+    <input type="number" v-model.number="whatIfFinal"
+      class="border p-2 w-full mb-2" />
+    <p class="text-sm">
+      Predicted Total:
+      {{ calculateWhatIfScore(whatIfFinal).toFixed(2) }}
+    </p>
+
+    <div class="flex gap-2 mt-3">
+      <button @click="generateReport"
+        class="bg-green-500 text-white px-3 py-1 rounded">
+        Report
+      </button>
+      <button @click="resetAllScores"
+        class="bg-red-500 text-white px-3 py-1 rounded">
+        Reset
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const { createApp } = Vue;
+
+createApp({
+  data() {
+    return {
+      student: {
+        name: '',
+        id: '',
+        assignments: [],
+        midterm: 0,
+        final: 0,
+        attendance: 0
+      },
+      newAssignment: null,
+      whatIfFinal: 0
+    };
+  },
+
+  computed: {
+    averageAssignmentScore() {
+      if (!this.student.assignments.length) return 0;
+      return this.student.assignments.reduce((a, b) => a + b, 0)
+        / this.student.assignments.length;
+    },
+    weightedAssignmentScore() {
+      return this.averageAssignmentScore * 0.4;
+    },
+    weightedMidtermScore() {
+      return this.student.midterm * 0.25;
+    },
+    weightedFinalScore() {
+      return this.student.final * 0.25;
+    },
+    weightedAttendanceScore() {
+      return this.student.attendance * 0.1;
+    },
+    totalScore() {
+      return (
+        this.weightedAssignmentScore +
+        this.weightedMidtermScore +
+        this.weightedFinalScore +
+        this.weightedAttendanceScore
+      );
+    },
+    letterGrade() {
+      const s = this.totalScore;
+      if (s >= 90) return 'A';
+      if (s >= 80) return 'B';
+      if (s >= 70) return 'C';
+      if (s >= 60) return 'D';
+      return 'F';
+    },
+    isPassing() {
+      return this.totalScore >= 60;
+    },
+    gradeStatus() {
+      if (this.totalScore >= 90) return 'Excellent';
+      if (this.totalScore >= 80) return 'Good';
+      if (this.totalScore >= 70) return 'Average';
+      if (this.totalScore >= 60) return 'Poor';
+      return 'Failing';
+    },
+    lowestAssignment() {
+      return this.student.assignments.length
+        ? Math.min(...this.student.assignments)
+        : '-';
+    },
+    highestAssignment() {
+      return this.student.assignments.length
+        ? Math.max(...this.student.assignments)
+        : '-';
+    },
+    missedAssignments() {
+      return this.student.assignments.filter(a => a === 0).length;
+    },
+    perfectScores() {
+      return this.student.assignments.filter(a => a === 100).length;
+    }
+  },
+
+  methods: {
+    addAssignment(score) {
+      if (score >= 0 && score <= 100) {
+        this.student.assignments.push(score);
+        this.newAssignment = null;
+      }
+    },
+    removeAssignment(index) {
+      this.student.assignments.splice(index, 1);
+    },
+    updateAssignment(index, score) {
+      this.student.assignments[index] = Math.min(100, Math.max(0, score));
+    },
+    calculateWhatIfScore(newFinal) {
+      return (
+        this.weightedAssignmentScore +
+        this.weightedMidtermScore +
+        newFinal * 0.25 +
+        this.weightedAttendanceScore
+      );
+    },
+    resetAllScores() {
+      this.student = {
+        name: '',
+        id: '',
+        assignments: [],
+        midterm: 0,
+        final: 0,
+        attendance: 0
+      };
+    },
+    generateReport() {
+      alert(
+        `Student: ${this.student.name}
+ID: ${this.student.id}
+Total: ${this.totalScore.toFixed(2)}
+Grade: ${this.letterGrade}
+Status: ${this.gradeStatus}`
+      );
+    }
+  },
+
+  watch: {
+    totalScore(newVal, oldVal) {
+      if (Math.abs(newVal - oldVal) > 5) {
+        console.log('Total score changed significantly:', newVal);
+      }
+    },
+    'student.assignments': {
+      deep: true,
+      handler(newVal, oldVal) {
+        console.log('Assignments changed:', newVal.length);
+      }
+    }
+  }
+}).mount('#app');
+</script>
+</body>
+</html>

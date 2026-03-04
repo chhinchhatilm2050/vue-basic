@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Custom Laptop Configuration</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Asap&family=Lobster&display=swap" rel="stylesheet">
+  <style>
+    body {
+        font-family: "Asap", sans-serif;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-100 p-6">
+<div id="app" class="max-w-6xl mx-auto bg-white p-6 rounded-lg shadow">
+
+  <h1 class="text-3xl font-bold mb-6">💻 Custom Laptop Configuration</h1>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+    <!-- LEFT : CONFIGURATION -->
+    <div class="space-y-5">
+
+      <!-- Processor -->
+      <div>
+        <label class="font-semibold">Processor</label>
+        <select v-model="config.processor" class="w-full mt-1 p-2 border rounded">
+          <option v-for="(p, key) in processors" :value="key">
+            {{ key }} - ${{ p }}
+          </option>
+        </select>
+      </div>
+
+      <!-- RAM -->
+      <div>
+        <label class="font-semibold">RAM</label>
+        <div class="space-y-1">
+          <label v-for="(price, ram) in ramOptions" class="flex items-center gap-2">
+            <input type="radio" v-model="config.ram" :value="ram">
+            {{ ram }} - ${{ price }}
+          </label>
+        </div>
+      </div>
+
+      <!-- Storage -->
+      <div>
+        <label class="font-semibold">Storage</label>
+        <div class="space-y-1">
+          <label v-for="(price, storage) in storageOptions" class="flex items-center gap-2">
+            <input type="checkbox" v-model="config.storage" :value="storage">
+            {{ storage }} - ${{ price }}
+          </label>
+        </div>
+      </div>
+
+      <!-- Screen -->
+      <div>
+        <label class="font-semibold">Screen Size</label>
+        <select v-model="config.screen" class="w-full mt-1 p-2 border rounded">
+          <option v-for="(price, size) in screens">
+            {{ size }} - ${{ price }}
+          </option>
+        </select>
+      </div>
+
+      <!-- OS -->
+      <div>
+        <label class="font-semibold">Operating System</label>
+        <div class="space-y-1">
+          <label v-for="(price, os) in operatingSystems" class="flex items-center gap-2">
+            <input type="radio" v-model="config.os" :value="os">
+            {{ os }} - ${{ price }}
+          </label>
+        </div>
+      </div>
+
+      <!-- Accessories -->
+      <div>
+        <label class="font-semibold">Accessories</label>
+        <div class="space-y-1">
+          <label v-for="(price, acc) in accessories" class="flex items-center gap-2">
+            <input type="checkbox" v-model="config.accessories" :value="acc">
+            {{ acc }} - ${{ price }}
+          </label>
+        </div>
+      </div>
+
+      <!-- Warranty -->
+      <div>
+        <label class="font-semibold">Warranty</label>
+        <div class="space-y-1">
+          <label v-for="(price, w) in warranties" class="flex items-center gap-2">
+            <input type="radio" v-model="config.warranty" :value="w">
+            {{ w }} {{ price > 0 ? '(+$' + price + ')' : '(Included)' }}
+          </label>
+        </div>
+      </div>
+
+      <!-- Quantity -->
+      <div>
+        <label class="font-semibold">Quantity</label>
+        <input type="number" min="1" max="10" v-model.number="config.qty"
+               class="w-full mt-1 p-2 border rounded">
+      </div>
+
+      <!-- Discount -->
+      <div>
+        <label class="font-semibold">Discount Code</label>
+        <input type="text" v-model="discountCode"
+               class="w-full mt-1 p-2 border rounded"
+               placeholder="SAVE10, STUDENT15, VIP20">
+      </div>
+
+      <!-- Buttons -->
+      <div class="flex gap-3">
+        <button @click="addToCart"
+                class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+          Add to Cart
+        </button>
+        <button @click="resetConfig"
+                class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+          Reset
+        </button>
+      </div>
+    </div>
+
+    <!-- RIGHT : SUMMARY -->
+    <div class="bg-gray-50 p-4 rounded-lg space-y-3">
+      <h2 class="text-xl font-bold">📋 Configuration Summary</h2>
+
+      <p><b>Processor:</b> {{ config.processor }}</p>
+      <p><b>RAM:</b> {{ config.ram }}</p>
+      <p><b>Storage:</b> {{ config.storage.join(', ') || 'None' }}</p>
+      <p><b>Screen:</b> {{ config.screen }}</p>
+      <p><b>OS:</b> {{ config.os }}</p>
+      <p><b>Accessories:</b> {{ config.accessories.join(', ') || 'None' }}</p>
+      <p><b>Warranty:</b> {{ config.warranty }}</p>
+      <p><b>Quantity:</b> {{ config.qty }}</p>
+
+      <hr>
+
+      <p>Base Price: <b>${{ basePrice }}</b></p>
+      <p>Add-ons: <b>${{ addonsPrice }}</b></p>
+      <p>Discount: <b>- ${{ discountAmount }}</b></p>
+      <p>Tax (10%): <b>${{ tax }}</b></p>
+
+      <h3 class="text-xl font-bold text-green-700">
+        Total: ${{ finalTotal }}
+      </h3>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const { createApp } = Vue;
+
+createApp({
+  data() {
+    return {
+      processors: {
+        "Intel i3": 300,
+        "Intel i5": 450,
+        "Intel i7": 650,
+        "Intel i9": 900
+      },
+      ramOptions: {
+        "8GB": 50,
+        "16GB": 100,
+        "32GB": 200,
+        "64GB": 400
+      },
+      storageOptions: {
+        "256GB SSD": 80,
+        "512GB SSD": 120,
+        "1TB SSD": 200,
+        "2TB HDD": 100
+      },
+      screens: {
+        '13"': 0,
+        '15"': 100,
+        '17"': 200
+      },
+      operatingSystems: {
+        "Windows": 120,
+        "Linux": 0,
+        "macOS": 200
+      },
+      accessories: {
+        "Wireless Mouse": 25,
+        "Keyboard": 45,
+        "Laptop Bag": 30,
+        "External Monitor": 250
+      },
+      warranties: {
+        "1 Year": 0,
+        "2 Years": 100,
+        "3 Years": 200
+      },
+      discountCodes: {
+        SAVE10: 0.10,
+        STUDENT15: 0.15,
+        VIP20: 0.20
+      },
+      discountCode: "",
+      config: {
+        processor: "Intel i3",
+        ram: "8GB",
+        storage: [],
+        screen: '13"',
+        os: "Linux",
+        accessories: [],
+        warranty: "1 Year",
+        qty: 1
+      }
+    }
+  },
+  computed: {
+    basePrice() {
+      return this.processors[this.config.processor];
+    },
+    addonsPrice() {
+      let total = 0;
+      total += this.ramOptions[this.config.ram];
+      total += this.screens[this.config.screen];
+      total += this.operatingSystems[this.config.os];
+      total += this.warranties[this.config.warranty];
+
+      this.config.storage.forEach(s => total += this.storageOptions[s]);
+      this.config.accessories.forEach(a => total += this.accessories[a]);
+
+      return total;
+    },
+    subtotal() {
+      return (this.basePrice + this.addonsPrice) * this.config.qty;
+    },
+    discountAmount() {
+      const rate = this.discountCodes[this.discountCode.toUpperCase()] || 0;
+      return Math.round(this.subtotal * rate);
+    },
+    tax() {
+      return Math.round((this.subtotal - this.discountAmount) * 0.10);
+    },
+    finalTotal() {
+      return this.subtotal - this.discountAmount + this.tax;
+    }
+  },
+  methods: {
+    addToCart() {
+      alert("✅ Laptop configuration added to cart!");
+    },
+    resetConfig() {
+      this.discountCode = "";
+      this.config = {
+        processor: "Intel i3",
+        ram: "8GB",
+        storage: [],
+        screen: '13"',
+        os: "Linux",
+        accessories: [],
+        warranty: "1 Year",
+        qty: 1
+      };
+    }
+  }
+}).mount("#app");
+</script>
+
+</body>
+</html>

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vue Music Player Demo</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+
+<div id="app" class="flex h-screen">
+
+  <!-- Library Sidebar -->
+  <library-sidebar :playlists="playlists" :likedSongs="likedSongs" :albums="albums" :artists="artists"></library-sidebar>
+
+  <!-- Main Content -->
+  <div class="flex-1 flex flex-col">
+
+    <!-- Search Results -->
+    <search-results :results="searchResults" :search-term="searchTerm"></search-results>
+
+    <!-- Playlist View -->
+    <playlist-view :playlist="selectedPlaylist" :songs="songs" @play-song="playSong"></playlist-view>
+
+    <!-- Queue List -->
+    <queue-list :queue="queue" @play-song="playSong" @remove-song="removeFromQueue"></queue-list>
+
+  </div>
+
+  <!-- Now Playing -->
+  <now-playing :current-song="currentSong"></now-playing>
+
+  <!-- Player Controls -->
+  <player-controls
+    :current-song="currentSong"
+    :is-playing="isPlaying"
+    :current-time="currentTime"
+    :duration="currentSong.duration"
+    @toggle-play="togglePlay"
+    @next="nextSong"
+    @prev="prevSong"
+    @seek="seek"
+  ></player-controls>
+
+</div>
+
+<script>
+const { createApp, reactive, ref } = Vue;
+
+createApp({
+  setup() {
+
+    const songs = reactive([
+      { id:1, title:"Song A", artist:"Artist 1", albumArt:"https://via.placeholder.com/150", duration:180 },
+      { id:2, title:"Song B", artist:"Artist 2", albumArt:"https://via.placeholder.com/150", duration:210 },
+      { id:3, title:"Song C", artist:"Artist 3", albumArt:"https://via.placeholder.com/150", duration:200 },
+      { id:4, title:"Song D", artist:"Artist 1", albumArt:"https://via.placeholder.com/150", duration:240 },
+      { id:5, title:"Song E", artist:"Artist 2", albumArt:"https://via.placeholder.com/150", duration:230 },
+      { id:6, title:"Song F", artist:"Artist 3", albumArt:"https://via.placeholder.com/150", duration:250 },
+      { id:7, title:"Song G", artist:"Artist 1", albumArt:"https://via.placeholder.com/150", duration:190 },
+      { id:8, title:"Song H", artist:"Artist 2", albumArt:"https://via.placeholder.com/150", duration:260 },
+      { id:9, title:"Song I", artist:"Artist 3", albumArt:"https://via.placeholder.com/150", duration:220 },
+      { id:10, title:"Song J", artist:"Artist 1", albumArt:"https://via.placeholder.com/150", duration:210 },
+    ]);
+
+    const currentSong = ref(songs[0]);
+    const isPlaying = ref(false);
+    const currentTime = ref(0);
+    const queue = reactive([songs[1], songs[2]]);
+    const selectedPlaylist = reactive({ id:1, name:"My Playlist", cover:"https://via.placeholder.com/200" });
+
+    const searchTerm = ref("");
+    const searchResults = reactive({ songs: songs, albums:[], artists:[], playlists:[] });
+
+    const playlists = reactive([{ id:1, name:"My Playlist" }, { id:2, name:"Workout Mix" }]);
+    const likedSongs = reactive([songs[0], songs[3]]);
+    const albums = reactive([{ id:1, name:"Album 1" }, { id:2, name:"Album 2" }]);
+    const artists = reactive([{ id:1, name:"Artist 1" }, { id:2, name:"Artist 2" }]);
+
+    const togglePlay = () => { isPlaying.value = !isPlaying.value; };
+    const nextSong = () => { currentSong.value = queue.shift() || songs[0]; };
+    const prevSong = () => { currentSong.value = songs[0]; };
+    const playSong = (song) => { currentSong.value = song; isPlaying.value = true; };
+    const removeFromQueue = (song) => { const idx = queue.indexOf(song); if(idx>-1) queue.splice(idx,1); };
+    const seek = (time) => { currentTime.value = time; };
+
+    return { songs, currentSong, isPlaying, currentTime, queue, selectedPlaylist, searchTerm, searchResults, playlists, likedSongs, albums, artists, togglePlay, nextSong, prevSong, playSong, removeFromQueue, seek };
+  },
+
+  components: {
+
+    // Player Controls
+    'player-controls': {
+      props:['currentSong','isPlaying','currentTime','duration'],
+      emits:['toggle-play','next','prev','seek'],
+      template:`
+        <div class="fixed bottom-0 left-0 w-full bg-gray-800 text-white p-4 flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <button @click="$emit('prev')">⏮️</button>
+            <button @click="$emit('toggle-play')">{{ isPlaying?'⏸️':'▶️' }}</button>
+            <button @click="$emit('next')">⏭️</button>
+            <span>{{ currentSong.title }} - {{ currentSong.artist }}</span>
+          </div>
+          <div class="flex items-center gap-4">
+            <span>{{ Math.floor(currentTime/60) }}:{{ String(currentTime%60).padStart(2,'0') }}</span>
+            <input type="range" min="0" :max="duration" v-model="currentTime" @input="$emit('seek', currentTime)" class="w-64">
+            <span>{{ Math.floor(duration/60) }}:{{ String(duration%60).padStart(2,'0') }}</span>
+          </div>
+        </div>
+      `
+    },
+
+    // Song Card
+    'song-card': {
+      props:['song'],
+      template:`
+        <div class="bg-white shadow rounded p-2 flex items-center gap-2">
+          <img :src="song.albumArt" class="w-12 h-12 rounded">
+          <div class="flex-1">
+            <p class="font-semibold">{{ song.title }}</p>
+            <p class="text-sm text-gray-500">{{ song.artist }}</p>
+          </div>
+          <button>▶️</button>
+        </div>
+      `
+    },
+
+    // Playlist View
+    'playlist-view': {
+      props:['playlist','songs'],
+      emits:['play-song'],
+      template:`
+        <div class="bg-white shadow rounded p-4 my-2">
+          <div class="flex items-center gap-4 mb-2">
+            <img :src="playlist.cover" class="w-20 h-20 rounded">
+            <div>
+              <p class="font-bold text-lg">{{ playlist.name }}</p>
+              <p class="text-sm text-gray-500">{{ songs.length }} songs</p>
+              <button class="px-2 py-1 bg-blue-500 text-white rounded text-sm mt-1">Play All</button>
+            </div>
+          </div>
+          <div>
+            <song-card v-for="s in songs" :key="s.id" :song="s" @click="$emit('play-song',s)"></song-card>
+          </div>
+        </div>
+      `
+    },
+
+    // Now Playing
+    'now-playing': {
+      props:['currentSong'],
+      template:`
+        <div class="fixed bottom-16 right-0 bg-white shadow rounded p-4 w-64">
+          <img :src="currentSong.albumArt" class="w-48 h-48 object-cover rounded mb-2">
+          <p class="font-bold">{{ currentSong.title }}</p>
+          <p class="text-gray-500">{{ currentSong.artist }}</p>
+          <div class="flex gap-2 mt-2">
+            <button>❤️</button>
+            <button>🔁</button>
+            <button>🎵</button>
+          </div>
+        </div>
+      `
+    },
+
+    // Queue List
+    'queue-list': {
+      props:['queue'],
+      emits:['play-song','remove-song'],
+      template:`
+        <div class="bg-white shadow rounded p-4 my-2">
+          <h3 class="font-bold mb-2">Up Next</h3>
+          <div v-for="(s,i) in queue" :key="s.id" class="flex items-center justify-between mb-1">
+            <span>{{ s.title }}</span>
+            <div class="flex gap-1">
+              <button @click="$emit('play-song',s)">▶️</button>
+              <button @click="$emit('remove-song',s)">❌</button>
+            </div>
+          </div>
+          <button @click="queue.splice(0)" class="mt-2 px-2 py-1 bg-red-500 text-white rounded text-sm">Clear Queue</button>
+        </div>
+      `
+    },
+
+    // Search Results
+    'search-results': {
+      props:['results','searchTerm'],
+      data(){return{activeTab:'Songs'};},
+      template:`
+        <div class="bg-white shadow rounded p-4 mb-2">
+          <input type="text" v-model="searchTerm" placeholder="Search songs..." class="w-full border rounded p-2 mb-2">
+          <div class="flex gap-2 mb-2">
+            <button v-for="tab in ['Songs','Albums','Artists','Playlists']" :key="tab" @click="activeTab=tab" :class="activeTab===tab?'font-bold border-b-2':'text-gray-500'">{{ tab }}</button>
+          </div>
+          <div v-if="activeTab==='Songs'">
+            <song-card v-for="s in results.songs" :key="s.id" :song="s"></song-card>
+          </div>
+        </div>
+      `
+    },
+
+    // Library Sidebar
+    'library-sidebar': {
+      props:['playlists','likedSongs','albums','artists'],
+      template:`
+        <aside class="w-64 bg-white shadow p-4 flex-shrink-0 space-y-4">
+          <h3 class="font-bold mb-2">Your Library</h3>
+          <div>
+            <p class="font-semibold">Playlists</p>
+            <ul class="ml-2">
+              <li v-for="p in playlists" :key="p.id">{{ p.name }}</li>
+            </ul>
+          </div>
+          <div>
+            <p class="font-semibold">Liked Songs</p>
+            <ul class="ml-2">
+              <li v-for="s in likedSongs" :key="s.id">{{ s.title }}</li>
+            </ul>
+          </div>
+          <div>
+            <p class="font-semibold">Albums</p>
+            <ul class="ml-2">
+              <li v-for="a in albums" :key="a.id">{{ a.name }}</li>
+            </ul>
+          </div>
+          <div>
+            <p class="font-semibold">Artists</p>
+            <ul class="ml-2">
+              <li v-for="a in artists" :key="a.id">{{ a.name }}</li>
+            </ul>
+          </div>
+          <button class="mt-2 px-2 py-1 bg-blue-500 text-white rounded text-sm w-full">Create Playlist</button>
+        </aside>
+      `
+    }
+
+  }
+}).mount('#app');
+</script>
+
+</body>
+</html>

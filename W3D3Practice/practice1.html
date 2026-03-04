@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registration Form</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    #app {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      max-width: 500px;
+      width: 100%;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 1.5rem;
+    }
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: #555;
+      font-weight: bold;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 0.8rem;
+      border: 2px solid #ddd;
+      border-radius: 6px;
+      font-size: 1rem;
+      box-sizing: border-box;
+      transition: border-color 0.3s;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    input.error {
+      border-color: #dc3545;
+    }
+    input.success {
+      border-color: #28a745;
+    }
+    .error-message {
+      color: #dc3545;
+      font-size: 0.9rem;
+      margin-top: 0.3rem;
+    }
+    .success-message {
+      color: #28a745;
+      font-size: 0.9rem;
+      margin-top: 0.3rem;
+    }
+    button {
+      width: 100%;
+      padding: 1rem;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover:not(:disabled) {
+      background: #5568d3;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <h1>📝 Registration Form</h1>
+    <form @submit.prevent="submitForm">
+      <!-- Username -->
+      <div class="form-group">
+        <label for="username">Username *</label>
+        <input 
+          id="username"
+          v-model.trim="formData.username"
+          @blur="validateField('username')"
+          :class="{ error: errors.username, success: formData.username && !errors.username }"
+          placeholder="Enter username">
+        <p v-if="errors.username" class="error-message">{{ errors.username }}</p>
+      </div>
+      
+      <!-- Email -->
+      <div class="form-group">
+        <label for="email">Email *</label>
+        <input 
+          id="email"
+          type="email"
+          v-model.trim="formData.email"
+          @blur="validateField('email')"
+          :class="{ error: errors.email, success: formData.email && !errors.email }"
+          placeholder="Enter email">
+        <p v-if="errors.email" class="error-message">{{ errors.email }}</p>
+      </div>
+      <!-- Age -->
+      <div class="form-group">
+        <label for="age">Age *</label>
+        <input 
+          id="age"
+          type="number"
+          v-model.number="formData.age"
+          @blur="validateField('age')"
+          :class="{ error: errors.age, success: formData.age && !errors.age }"
+          placeholder="Enter age">
+        <p v-if="errors.age" class="error-message">{{ errors.age }}</p>
+      </div>
+      <!-- Country -->
+      <div class="form-group">
+        <label for="country">Country *</label>
+        <select id="country" v-model="formData.country">
+          <option value="">Select country</option>
+          <option value="KH">Cambodia</option>
+          <option value="TH">Thailand</option>
+          <option value="VN">Vietnam</option>
+          <option value="LA">Laos</option>
+        </select>
+        <p v-if="errors.country" class="error-message">{{ errors.country }}</p>
+      </div>
+      
+      <!-- Gender -->
+      <div class="form-group">
+        <label>Gender *</label>
+        <div style="display: flex; gap: 1rem;">
+          <label style="font-weight: normal;">
+            <input type="radio" value="male" v-model="formData.gender"> Male
+          </label>
+          <label style="font-weight: normal;">
+            <input type="radio" value="female" v-model="formData.gender"> Female
+          </label>
+          <label style="font-weight: normal;">
+            <input type="radio" value="other" v-model="formData.gender"> Other
+          </label>
+        </div>
+      </div>
+      
+      <!-- Interests -->
+      <div class="form-group">
+        <label>Interests</label>
+        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+          <label style="font-weight: normal;">
+            <input type="checkbox" value="coding" v-model="formData.interests"> Coding
+          </label>
+          <label style="font-weight: normal;">
+            <input type="checkbox" value="design" v-model="formData.interests"> Design
+          </label>
+          <label style="font-weight: normal;">
+            <input type="checkbox" value="gaming" v-model="formData.interests"> Gaming
+          </label>
+        </div>
+      </div>
+      
+      <!-- Bio -->
+      <div class="form-group">
+        <label for="bio">Bio</label>
+        <textarea 
+          id="bio"
+          v-model="formData.bio"
+          rows="4"
+          placeholder="Tell us about yourself..."></textarea>
+      </div>
+      
+      <!-- Terms -->
+      <div class="form-group checkbox-group">
+        <input 
+          type="checkbox" 
+          id="terms" 
+          v-model="formData.agreedToTerms">
+        <label for="terms" style="margin: 0;">I agree to terms and conditions *</label>
+      </div>
+      
+      <button type="submit" :disabled="!isFormValid">Register</button>
+    </form>
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+
+    createApp({
+      data() {
+        return {
+          formData: {
+            username: '',
+            email: '',
+            age: null,
+            country: '',
+            gender: '',
+            interests: [],
+            bio: '',
+            agreedToTerms: false
+          },
+          errors: {}
+        }
+      },
+      computed: {
+        isFormValid() {
+          return this.formData.username && 
+                 this.formData.email && 
+                 this.formData.age &&
+                 this.formData.country &&
+                 this.formData.agreedToTerms &&
+                 Object.keys(this.errors).length === 0;
+        }
+      },
+      methods: {
+        validateField(field) {
+          switch(field) {
+            case 'username':
+              if (!this.formData.username) {
+                this.errors.username = 'Username is required';
+              } else if (this.formData.username.length < 3) {
+                this.errors.username = 'Username must be at least 3 characters';
+              } else {
+                delete this.errors.username;
+              }
+              break;
+              
+            case 'email':
+              const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+              if (!this.formData.email) {
+                this.errors.email = 'Email is required';
+              } else if (!emailRegex.test(this.formData.email)) {
+                this.errors.email = 'Invalid email format';
+              } else {
+                delete this.errors.email;
+              }
+              break;
+              
+            case 'age':
+              if (!this.formData.age) {
+                this.errors.age = 'Age is required';
+              } else if (this.formData.age < 13 || this.formData.age > 120) {
+                this.errors.age = 'Age must be between 13 and 120';
+              } else {
+                delete this.errors.age;
+              }
+              break;
+          }
+        },
+        submitForm() {
+          // Validate all fields
+          this.validateField('username');
+          this.validateField('email');
+          this.validateField('age');
+          
+          if (!this.formData.country) {
+            this.errors.country = 'Please select a country';
+          } else {
+            delete this.errors.country;
+          }
+          
+          if (this.isFormValid) {
+            console.log('Form Data:', this.formData);
+            alert('Registration successful!\nCheck console for details.');
+          }
+        }
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>
